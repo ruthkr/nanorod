@@ -1,26 +1,28 @@
+#' @importFrom rlang .data
 get_summary_stat <- function(csv_path) {
   data <- data.table::fread(csv_path) %>%
     `colnames<-`(c("length"))
 
   length <- data$length
+
   df <- data.table::data.table(
     "Statistic" = c("Mean", "Median", "SD", "Min", "Max", "Count"),
-    "Value" = c(mean(length), median(length), sd(length), min(length), max(length), length(length))
+    "Value" = c(mean(length), stats::median(length), stats::sd(length), min(length), max(length), length(length))
   ) %>%
-    dplyr::mutate(Value = round(Value, 2))
+    dplyr::mutate(Value = round(.data$Value, 2))
 
   return(df)
 }
 
+#' @importFrom rlang .data
 plot_hist <- function(csv_path, col_choice = "#69b3a2", transparency_choice = 0.8) {
-
   # Read data
   data <- data.table::fread(csv_path) %>%
     `colnames<-`(c("length"))
 
   # Define the bin width
   # https://stats.stackexchange.com/questions/798/calculating-optimal-number-of-bins-in-a-histogram
-  bw <- 2 * IQR(data$length) / length(data$length)^(1 / 3)
+  bw <- 2 * stats::IQR(data$length) / length(data$length)^(1 / 3)
 
   # Define pars for bin
   round_any <- function(x, accuracy, f = round) {
@@ -46,7 +48,7 @@ plot_hist <- function(csv_path, col_choice = "#69b3a2", transparency_choice = 0.
       )
     ) %>%
     # arrange(Length) %>%
-    dplyr::group_by(bin) %>%
+    dplyr::group_by(.data$bin) %>%
     dplyr::summarise(
       count = dplyr::n()
     )
@@ -58,7 +60,7 @@ plot_hist <- function(csv_path, col_choice = "#69b3a2", transparency_choice = 0.
   gghist <- df_to_plot %>%
     dplyr::rowwise() %>%
     dplyr::mutate(
-      bin_centre = bin %>%
+      bin_centre = .data$bin %>%
         stringr::str_extract_all("[0-9]+") %>%
         unlist() %>%
         as.numeric() %>%
@@ -66,7 +68,7 @@ plot_hist <- function(csv_path, col_choice = "#69b3a2", transparency_choice = 0.
     ) %>%
     # Plot
     ggplot2::ggplot() +
-    ggplot2::aes(x = bin_centre, y = count) +
+    ggplot2::aes(x = .data$bin_centre, y = .data$count) +
     ggplot2::geom_col(fill = col_choice, color = "#e9ecef", alpha = transparency_choice) +
     ggplot2::scale_x_continuous(breaks = x_breaks) +
     ggplot2::labs(x = "Length (nm)", y = "Counts")
@@ -79,16 +81,15 @@ plot_hist <- function(csv_path, col_choice = "#69b3a2", transparency_choice = 0.
   return(list_output)
 }
 
+#' @importFrom rlang .data
 plot_boxplot <- function(csv_path, col_choice = "#69b3a2", transparency_choice = 0.7) {
-
   # Read data
   data <- data.table::fread(csv_path) %>%
     `colnames<-`(c("length"))
 
-
   ggboxplot <- data %>%
     ggplot2::ggplot() +
-    ggplot2::aes(y = length) +
+    ggplot2::aes(y = .data$length) +
     ggplot2::geom_boxplot(fill = col_choice, alpha = transparency_choice) +
     ggplot2::theme(
       axis.text.x = ggplot2::element_blank(),
