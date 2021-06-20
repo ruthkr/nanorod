@@ -29,17 +29,16 @@ app_ui <- function(request) {
 #' @import shiny
 #' @importFrom golem add_resource_path activate_js favicon bundle_resources
 #' @noRd
-golem_add_external_resources <- function(){
-
+golem_add_external_resources <- function() {
   add_resource_path(
-    'www', app_sys('app/www')
+    "www", app_sys("app/www")
   )
 
   tags$head(
-    favicon(),
+    favicon(ico = "favicon", ext = "png"),
     bundle_resources(
-      path = app_sys('app/www'),
-      app_title = 'nanorod'
+      path = app_sys("app/www"),
+      app_title = "nanorod"
     )
     # Add here other external resources
     # for example, you can add shinyalert::useShinyalert()
