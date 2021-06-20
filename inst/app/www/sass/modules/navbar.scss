@@ -1,0 +1,24 @@
+/* Navbar */
+.navbar-custom-logo {
+  height: 32px;
+  margin-top: -5px;
+  margin-right: 10px;
+}
+
+.title-container {
+  display: inline-flex;
+  align-items: center;
+}
+
+.title-version {
+  background-color: $version-background;
+  border-radius: 3px;
+  color: $version-color;
+  font-size: 11px;
+  margin-top: 3px;
+  margin-left: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  padding-top: 1px;
+  padding-bottom: 1px;
+}
