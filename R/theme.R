@@ -4,8 +4,9 @@ theme <- function() {
   theme <- bs_theme(
     version = 4,
     bootswatch = "united",
-    primary = "#2B7BE4",
-    secondary = "#8dbaf5",
+    # primary = "#2B7BE4",
+    primary = "#E3825C",
+    secondary = "#F5C38D",
     # success = "#a4c689",
     # warning = "#fdbe4b",
     # info = "#cbd4dd",
@@ -21,7 +22,7 @@ theme <- function() {
 #' @noRd
 app_title <- function(title) {
   div(
-    img(class = "navbar-custom-logo", src = "www/favicon.png"),
+    img(class = "navbar-custom-logo", src = "www/icon.svg"),
     div(
       class = "title-container",
       span(title),

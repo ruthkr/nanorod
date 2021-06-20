@@ -10,7 +10,7 @@ app_ui <- function(request) {
     golem_add_external_resources(),
     # Your application UI logic
     navbarPage(
-      title = "nanorod",
+      title = app_title("nanorod"),
       theme = theme(),
       collapsible = TRUE,
 
