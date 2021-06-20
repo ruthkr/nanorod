@@ -18,6 +18,7 @@ Imports:
     ggplot2,
     golem (>= 0.3.1),
     magrittr,
+    reticulate,
     rlang,
     shiny (>= 1.6.0),
     stringr,
