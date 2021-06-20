@@ -1,0 +1,84 @@
+---
+title: "Nanorod Python test"
+author: "Ruth Kristianingsih"
+output: no
+---
+
+# Initial set-up
+
+```{r setup, message=FALSE, include=FALSE}
+library(tidyverse)
+theme_set(theme_light())
+```
+
+
+```{r}
+virtualenv_dir <- Sys.getenv("VIRTUALENV_NAME")
+python_path <- Sys.getenv("PYTHON_PATH")
+
+# Create virtual env and install dependencies
+reticulate::use_python(python_path, required = TRUE)
+# reticulate::virtualenv_create(envname = virtualenv_dir, python = python_path)
+# reticulate::virtualenv_install(virtualenv_dir, packages = PYTHON_DEPENDENCIES, ignore_installed=TRUE)
+reticulate::use_virtualenv(virtualenv_dir, required = TRUE)
+
+# Load Python code
+reticulate::source_python(here::here("src/electron_microscopy.py"))
+```
+
+```{r}
+image_path <- "/Users/kristiar/Downloads/Nanorods/1-3 dilution/1-2_dilution__45kX__JR__0004.dm4"
+
+dm4_list <- open_DM4(image_path)
+names(dm4_list) <- c("filename", "img", "pixel_size")
+```
+
+```{r}
+binary <- img_prep(dm4_list$img) # Prepares the image to be labelled.
+labels <- watershedding(binary) # Watersheds and labels the image.
+labels <- filter_labels_by_area(labels, 500, dm4_list$pixel_size)
+labels <- filter_labels_by_minor_axis_length(labels, 40, dm4_list$pixel_size)
+labels <- reorder_labels(labels)
+```
+
+```{r}
+skimage <- reticulate::import("skimage")
+labels_properties <- skimage$measure$regionprops(labels)
+```
+
+```{r}
+# Plots and saves the images.
+plotfig(labels, labels_properties, dm4_list$img, dm4_list$filename)
+```
+
+```{r}
+knitr::include_graphics(paste0(dm4_list$filename, ".png"))
+```
+
+```{r}
+# graphics::image(dm4_list$img, useRaster=TRUE, axes=FALSE, col = grey(seq(0, 1, length = 256)))
+```
+
+
+```{r}
+# Creates a table containing the nanorod properties.
+table <- skimage$measure$regionprops_table(labels, properties = c('label', 'centroid', 'feret_diameter_max'))
+table <- as.data.frame(table)
+
+table <- table %>%
+  dplyr::mutate(
+    feret_diameter_max = dm4_list$pixel_size * feret_diameter_max,
+    image_name = paste0(dm4_list$filename, ".dm4")
+  ) %>%
+  dplyr::select(
+    "Nanorod ID" = label,
+    "Image name" = image_name,
+    "Coordinate in Y" = centroid.0,
+    "Coordinate in X" = centroid.1,
+    "Length in nm" = feret_diameter_max
+  )
+```
+
+
+
+
