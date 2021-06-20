@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from skimage import filters, morphology, segmentation, measure, color
 from scipy import ndimage as ndi
-import pandas as pd
+# import pandas as pd
 # import glob
 # import tkinter as tk
 # from tkinter import filedialog
@@ -60,8 +60,36 @@ def plotfig(labels, region_properties, img, filename):
     ax[1].contour(labels,colors='r', linewidths=0.8)
     ax[1].set_title('Original', fontsize=16)
     plt.tight_layout()
-    plt.savefig(filename+'.png',dpi=600)
+    plt.savefig(filename + '.png',dpi=600)
+    plt.close()
     # plt.show()
+
+def plotfig_new(labels, region_properties, img, filename):
+    """This function takes the labelled image, the properties of the labels, and the name of the image and then plots (and saves) the figure."""
+
+    fig, ax = plt.subplots()
+    ax.imshow(color.label2rgb(labels,bg_label=0,colors=['red','violet','orange','green','blue','magenta','purple','crimson','lime','maroon','mediumvioletred','goldenrod','darkgreen','fuchsia','cornflowerblue','navy','hotpink','grey','chocolate','peru']))
+    for i in region_properties:
+        ax.text(i.centroid[1],i.centroid[0],i.label,color='white')
+
+    plt.gca().set_axis_off()
+    plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0, hspace = 0, wspace = 0)
+    plt.margins(0,0)
+    plt.gca().xaxis.set_major_locator(plt.NullLocator())
+    plt.gca().yaxis.set_major_locator(plt.NullLocator())
+    plt.savefig(filename + '_processed.png', dpi=600, bbox_inches = 'tight', pad_inches = 0)
+    plt.close()
+
+    fig, ax = plt.subplots()
+    ax.imshow(img,cmap='Greys_r')
+    ax.contour(labels,colors='r', linewidths=0.8)
+
+    plt.gca().set_axis_off()
+    plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0, hspace = 0, wspace = 0)
+    plt.margins(0,0)
+    plt.gca().xaxis.set_major_locator(plt.NullLocator())
+    plt.gca().yaxis.set_major_locator(plt.NullLocator())
+    plt.savefig(filename + '_raw.png', dpi=600, bbox_inches = 'tight', pad_inches = 0)
     plt.close()
 
 def filter_labels_by_eccentricity(labels,eccentricity):
