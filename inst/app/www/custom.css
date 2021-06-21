@@ -11,7 +11,7 @@
 }
 
 .title-version {
-  background-color: #f0f;
+  background-color: #F5C38D;
   border-radius: 3px;
   color: #fff;
   font-size: 11px;
@@ -70,6 +70,11 @@
   margin-left: auto;
 }
 
+/* Custom image sizes */
+.nanorod-img {
+  max-width: 100%;
+}
+
 /* Home Page */
 .home-page {
   padding-bottom: 20px;
@@ -112,4 +117,9 @@
   display: inline-block;
   vertical-align: top;
   width: 20px;
+}
+
+/* DT tables */
+.table.dataTable tbody td.active, .table.dataTable tbody tr.active td {
+  background-color: #F5C38D !important;
 }
