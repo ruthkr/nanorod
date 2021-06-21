@@ -253,65 +253,65 @@ mod_nanorod_stats_server <- function(id) {
       deleteFile = FALSE
     )
 
+    # Other outputs ----
+    output$table_input <- DT::renderDT({
+      if (input$process_image == 0) {
+        return(DT::datatable(NULL, style = "bootstrap4"))
+      }
 
-      table <- render_datatable(data_input)
+      input$analyse_data
+      isolate({
+        data <- react_vals$lengths
+      })
+
+      table <- render_datatable(data)
 
       return(table)
     })
 
     output$table_stat <- DT::renderDT({
-      if (input$process_image == 0) {
+      if (input$analyse_data == 0) {
         return(DT::datatable(NULL, style = "bootstrap4"))
       }
 
-      input$process_image
+      input$analyse_data
       isolate({
-        data <- input$nanorod_lengths_csv
+        data <- react_vals$lengths
       })
 
-      data_path <- data$datapath
-
-      stat_df <- get_summary_stat(data_path)
+      stat_df <- get_summary_stat(data)
 
       table <- render_datatable(stat_df)
 
       return(table)
     })
 
-    output$plot_histogram <- renderPlot(
-      {
-        if (input$process_image == 0) {
-          return(NULL)
-        }
+    output$plot_histogram <- renderPlot({
+      if (input$analyse_data == 0) {
+        return(NULL)
+      }
 
-        input$process_image
-        isolate({
-          data <- input$nanorod_lengths_csv
-        })
+      input$analyse_data
+      isolate({
+        data <- react_vals$lengths
+      })
 
-        data_path <- data$datapath
+      gg <- plot_hist(data)
 
-        gg <- plot_hist(csv_path = data_path)
-
-        return(gg$hist_plot)
-      },
-      res = 96
-    )
+      return(gg$hist_plot)
+    }, res = 96)
 
     output$table_range <- DT::renderDT({
-      if (input$process_image == 0) {
+      if (input$analyse_data == 0) {
         return(DT::datatable(NULL, style = "bootstrap4"))
       }
 
-      input$process_image
+      input$analyse_data
       isolate({
-        data <- input$nanorod_lengths_csv
+        data <- react_vals$lengths
       })
 
-      data_path <- data$datapath
-
-      gg <- plot_hist(csv_path = data_path)
-
+      gg <- plot_hist(data)
       table <- render_datatable(gg$grouped_length_df)
 
       return(table)
@@ -319,18 +319,16 @@ mod_nanorod_stats_server <- function(id) {
 
     output$plot_boxplot <- renderPlot(
       {
-        if (input$process_image == 0) {
+        if (input$analyse_data == 0) {
           return(NULL)
         }
 
-        input$process_image
+        input$analyse_data
         isolate({
-          data <- input$nanorod_lengths_csv
+          data <- react_vals$lengths
         })
 
-        data_path <- data$datapath
-
-        gg <- plot_boxplot(csv_path = data_path)
+        gg <- plot_boxplot(data)
 
         return(gg)
       },
