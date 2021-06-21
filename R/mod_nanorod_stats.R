@@ -49,6 +49,8 @@ mod_nanorod_stats_server <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
+    message("[Nanorods] Started server")
+
     options(shiny.maxRequestSize = 150 * 1024^2)
 
     # Load virtualenv
@@ -58,12 +60,12 @@ mod_nanorod_stats_server <- function(id) {
     reticulate::use_virtualenv(virtualenv_dir, required = TRUE)
 
     # Load Python code
-    reticulate::source_python("src/primality_test.py")
+    reticulate::source_python("src/electron_microscopy.py")
     skimage <- reticulate::import("skimage")
 
     react_vals <- reactiveValues()
 
-    # Calculations ----
+    # Python image processing ----
     observeEvent(
       input$process_image,
       {
@@ -72,52 +74,80 @@ mod_nanorod_stats_server <- function(id) {
         image_name <- image$name
         image_path <- image$datapath
 
-        # Process image
-        dm4_list <- open_DM4(filepath = image_path) %>%
-          `names<-`(c("filename", "img", "pixel_size"))
-        binary <- img_prep(img = dm4_list$img)
+        withProgress(message = "Processing DM4 image", {
+          incProgress(0, detail = NULL)
 
-        # Watershed and label the image
-        labels <- binary %>%
-          watershedding() %>%
-          filter_labels_by_area(
-            area_in_nm2 = 500,
-            pixel_size = dm4_list$pixel_size
-          ) %>%
-          filter_labels_by_minor_axis_length(
-            length_in_nm = 40,
-            pixel_size = dm4_list$pixel_size
-          ) %>%
-          reorder_labels()
+          message("[Nanorods] Reading data...")
+          incProgress(1 / 5, detail = "Reading image")
+          # Read image
+          dm4_list <- open_DM4(filepath = image_path) %>%
+            `names<-`(c("filename", "img", "pixel_size"))
+          binary <- img_prep(img = dm4_list$img)
 
-        # Labels properties
-        labels_properties <- labels %>%
-          skimage$measure$regionprops()
+          # Watershed and label the image
+          message("[Nanorods] Processing image...")
+          incProgress(2 / 5, detail = "Processing image")
+          labels <- binary %>%
+            watershedding() %>%
+            filter_labels_by_area(
+              area_in_nm2 = 500,
+              pixel_size = dm4_list$pixel_size
+            ) %>%
+            filter_labels_by_minor_axis_length(
+              length_in_nm = 40,
+              pixel_size = dm4_list$pixel_size
+            ) %>%
+            reorder_labels()
 
-        # Process table
-        table <- skimage$measure$regionprops_table(
-          labels = labels,
-          properties = c("label", "centroid", "feret_diameter_max")
-        ) %>%
-          as.data.frame() %>%
-          dplyr::mutate(
-            feret_diameter_max = dm4_list$pixel_size * feret_diameter_max,
-            image_name = image_name
+          # Labels properties
+          labels_properties <- labels %>%
+            skimage$measure$regionprops()
+
+          # Process table
+          message("[Nanorods] Summarising data...")
+          incProgress(3 / 5, detail = "Summarising data")
+          table <- skimage$measure$regionprops_table(
+            labels,
+            properties = c("label", "centroid", "feret_diameter_max")
           ) %>%
-          dplyr::select(
-            Nanorod_ID = label,
-            image_name,
-            coord_x = centroid.0,
-            coord_y = centroid.1,
-            length_in_nm = feret_diameter_max
+            as.data.frame() %>%
+            dplyr::mutate(
+              feret_diameter_max = dm4_list$pixel_size * feret_diameter_max,
+              image_name = image_name
+            ) %>%
+            dplyr::select(
+              Nanorod_ID = label,
+              image_name,
+              coord_x = centroid.0,
+              coord_y = centroid.1,
+              length_in_nm = feret_diameter_max
+            )
+
+          # Render plots
+          message("[Nanorods] Rendering images...")
+          incProgress(4 / 5, detail = "Rendering images")
+          temp_img_path <- tempdir()
+          plotfig_separate(
+            labels = labels,
+            region_properties = labels_properties,
+            img = dm4_list$img,
+            filename = paste0(temp_img_path, "/", image_name),
+            out_dpi = 300
           )
 
-        # Render plots
-        plotfig(labels, labels_properties, dm4_list$img, image_name)
+          message("[Nanorods] Image processed successfully")
+          incProgress(1, detail = "Done")
+        })
+
+        showNotification(
+          ui = "Image processed successfully"
+        )
 
         # Reactive values
+        message("[Nanorods] Saving results into react_vals...")
         react_vals$nanorods_table <- table
-        react_vals$plot_path <- paste0(image_name, ".png")
+        react_vals$plot_raw_path <- paste0(temp_img_path, "/", image_name, "_raw.png")
+        react_vals$plot_processed_path <- paste0(temp_img_path, "/", image_name, "_processed.png")
       }
     )
 
