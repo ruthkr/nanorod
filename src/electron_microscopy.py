@@ -90,7 +90,7 @@ def plotfig(labels, region_properties, img, filename, out_dpi = 600):
     plt.close()
 
 
-def plotfig_new(labels, region_properties, img, filename, out_dpi = 600):
+def plotfig_separate(labels, region_properties, img, filename, out_dpi = 600):
     """This function takes the labelled image, the properties of the labels, and the name of the image and then plots (and saves) the figure."""
 
     fig, ax = plt.subplots()
