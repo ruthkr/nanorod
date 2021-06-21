@@ -52,13 +52,14 @@ mod_nanorod_stats_server <- function(id) {
     options(shiny.maxRequestSize = 150 * 1024^2)
 
     # Load virtualenv
-    virtualenv_dir = Sys.getenv('VIRTUALENV_NAME')
-    python_path = Sys.getenv('PYTHON_PATH')
+    virtualenv_dir <- Sys.getenv("VIRTUALENV_NAME")
+    python_path <- Sys.getenv("PYTHON_PATH")
     reticulate::use_python(python_path, required = TRUE)
     reticulate::use_virtualenv(virtualenv_dir, required = TRUE)
 
     # Load Python code
     reticulate::source_python("src/primality_test.py")
+    skimage <- reticulate::import("skimage")
 
     react_vals <- reactiveValues()
 
@@ -72,24 +73,33 @@ mod_nanorod_stats_server <- function(id) {
         image_path <- image$datapath
 
         # Process image
-        dm4_list <- open_DM4(image_path)
-        names(dm4_list) <- c("filename", "img", "pixel_size")
+        dm4_list <- open_DM4(filepath = image_path) %>%
+          `names<-`(c("filename", "img", "pixel_size"))
+        binary <- img_prep(img = dm4_list$img)
 
-        binary <- img_prep(dm4_list$img) # Prepares the image to be labelled.
-        labels <- watershedding(binary) # Watersheds and labels the image.
-        labels <- filter_labels_by_area(labels, 500, dm4_list$pixel_size)
-        labels <- filter_labels_by_minor_axis_length(labels, 40, dm4_list$pixel_size)
-        labels <- reorder_labels(labels)
-        skimage <- reticulate::import("skimage")
-        labels_properties <- skimage$measure$regionprops(labels)
+        # Watershed and label the image
+        labels <- binary %>%
+          watershedding() %>%
+          filter_labels_by_area(
+            area_in_nm2 = 500,
+            pixel_size = dm4_list$pixel_size
+          ) %>%
+          filter_labels_by_minor_axis_length(
+            length_in_nm = 40,
+            pixel_size = dm4_list$pixel_size
+          ) %>%
+          reorder_labels()
+
+        # Labels properties
+        labels_properties <- labels %>%
+          skimage$measure$regionprops()
 
         # Process table
         table <- skimage$measure$regionprops_table(
-          labels,
-          properties = c('label', 'centroid', 'feret_diameter_max')
-        ) %>% as.data.frame()
-
-        table <- table %>%
+          labels = labels,
+          properties = c("label", "centroid", "feret_diameter_max")
+        ) %>%
+          as.data.frame() %>%
           dplyr::mutate(
             feret_diameter_max = dm4_list$pixel_size * feret_diameter_max,
             image_name = image_name
