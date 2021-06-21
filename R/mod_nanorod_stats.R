@@ -172,6 +172,14 @@ mod_nanorod_stats_server <- function(id) {
       }
     )
 
+    # Show/hide download button
+    observeEvent(input$process_image, {
+      if (input$process_image == 0) {
+        shinyjs::disable("analyse_data")
+      } else {
+        shinyjs::enable("analyse_data")
+      }
+    })
 
     # Nanorods table ----
     output$nanorods_table <- DT::renderDT({
