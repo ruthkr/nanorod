@@ -1,7 +1,7 @@
 #' @importFrom rlang .data
-get_summary_stat <- function(csv_path) {
-  data <- data.table::fread(csv_path) %>%
-    `colnames<-`(c("length"))
+get_summary_stat <- function(data) {
+  data <- data %>%
+    `colnames<-`(c("nanorod_id", "length"))
 
   length <- data$length
 
@@ -15,10 +15,10 @@ get_summary_stat <- function(csv_path) {
 }
 
 #' @importFrom rlang .data
-plot_hist <- function(csv_path, col_choice = "#69b3a2", transparency_choice = 0.8) {
+plot_hist <- function(data, col_choice = "#69b3a2", transparency_choice = 0.8) {
   # Read data
-  data <- data.table::fread(csv_path) %>%
-    `colnames<-`(c("length"))
+  data <- data %>%
+    `colnames<-`(c("nanorod_id", "length"))
 
   # Define the bin width
   # https://stats.stackexchange.com/questions/798/calculating-optimal-number-of-bins-in-a-histogram
@@ -82,10 +82,10 @@ plot_hist <- function(csv_path, col_choice = "#69b3a2", transparency_choice = 0.
 }
 
 #' @importFrom rlang .data
-plot_boxplot <- function(csv_path, col_choice = "#69b3a2", transparency_choice = 0.7) {
+plot_boxplot <- function(data, col_choice = "#69b3a2", transparency_choice = 0.7) {
   # Read data
-  data <- data.table::fread(csv_path) %>%
-    `colnames<-`(c("length"))
+  data <- data %>%
+    `colnames<-`(c("nanorod_id", "length"))
 
   ggboxplot <- data %>%
     ggplot2::ggplot() +
