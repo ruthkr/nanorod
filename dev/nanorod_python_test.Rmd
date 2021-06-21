@@ -46,19 +46,8 @@ skimage <- reticulate::import("skimage")
 labels_properties <- skimage$measure$regionprops(labels)
 ```
 
-```{r}
-# Plots and saves the images.
-plotfig(labels, labels_properties, dm4_list$img, dm4_list$filename)
-```
 
-```{r}
-knitr::include_graphics(paste0(dm4_list$filename, ".png"))
-```
-
-```{r}
-# graphics::image(dm4_list$img, useRaster=TRUE, axes=FALSE, col = grey(seq(0, 1, length = 256)))
-```
-
+# Table 
 
 ```{r}
 # Creates a table containing the nanorod properties.
@@ -70,15 +59,94 @@ table <- table %>%
     feret_diameter_max = dm4_list$pixel_size * feret_diameter_max,
     image_name = paste0(dm4_list$filename, ".dm4")
   ) %>%
-  dplyr::select(
-    "Nanorod ID" = label,
-    "Image name" = image_name,
-    "Coordinate in Y" = centroid.0,
-    "Coordinate in X" = centroid.1,
-    "Length in nm" = feret_diameter_max
+  # dplyr::select(
+  #   "Nanorod ID" = label,
+  #   "Image name" = image_name,
+  #   "Coordinate in Y" = centroid.0,
+  #   "Coordinate in X" = centroid.1,
+  #   "Length in nm" = feret_diameter_max
+  # )
+   dplyr::select(
+    Nanorod_ID = label,
+    image_name,
+    coord_x = centroid.0,
+    coord_y = centroid.1,
+    length_in_nm = feret_diameter_max
   )
 ```
 
+```{r}
+table %>% 
+  data.table::fwrite(here::here("inst/extdata", "nanorod_data_test.csv"))
+```
 
+
+
+# Plots
+
+## Matplotlib
+
+```{r}
+# Plots and saves the images.
+plotfig(labels, labels_properties, dm4_list$img, dm4_list$filename)
+plotfig_new(labels, labels_properties, dm4_list$img, dm4_list$filename)
+```
+
+```{r}
+knitr::include_graphics(paste0(dm4_list$filename, ".png"))
+```
+
+```{r}
+here::here("dev", paste0(dm4_list$filename, "_processed.png")) %>% 
+  magick::image_read() %>% 
+  magick::image_ggplot() +
+  theme_bw() +
+  labs(title = "Selected objects")
+  # scale_y_continuous(trans = "reverse")
+```
+
+
+## Native R
+
+```{r}
+rotate <- function(x) {
+  t(apply(x, 2, rev))
+}
+```
+
+
+```{r fig.width=5, fig.height=5}
+graphics::image(rotate(labels), useRaster=TRUE, axes=FALSE)
+```
+
+```{r fig.width=5, fig.height=5}
+graphics::image(rotate(dm4_list$img), useRaster=TRUE, axes=FALSE, col = grey(seq(0, 1, length = 256)))
+```
+
+
+```{r}
+# raw_mat <- dm4_list$img %>% 
+#   # rotate() %>% 
+#   as.data.frame() %>% 
+#   tibble::rowid_to_column(var = "x") %>% 
+#   pivot_longer(
+#     cols = -x,
+#     names_to = "y"
+#   ) %>% 
+#     dplyr::mutate(
+#       y = stringr::str_remove_all(y, "V") %>% 
+#         as.numeric()
+#     )
+# 
+# raw_mat %>% 
+#   # dplyr::filter(
+#   #   x >= 3500,
+#   #   y >= 3500
+#   # ) %>% 
+# ggplot() +
+#   aes(x = x, y = y, fill = value, color = NULL) +
+#   geom_tile() +
+#   scale_y_continuous(trans = "reverse")
+```
 
 
