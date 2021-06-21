@@ -21,6 +21,7 @@ Imports:
     reticulate,
     rlang,
     shiny (>= 1.6.0),
+    shinyjs,
     stringr,
     tidyr
 Encoding: UTF-8

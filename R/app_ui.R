@@ -39,8 +39,9 @@ golem_add_external_resources <- function() {
     bundle_resources(
       path = app_sys("app/www"),
       app_title = "nanorod"
-    )
+    ),
     # Add here other external resources
+    shinyjs::useShinyjs()
     # for example, you can add shinyalert::useShinyalert()
   )
 }
