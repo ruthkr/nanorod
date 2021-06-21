@@ -172,15 +172,45 @@ mod_nanorod_stats_server <- function(id) {
       }
     )
 
-    output$table_input <- DT::renderDT({
+
+    # Nanorods table ----
+    output$nanorods_table <- DT::renderDT({
       if (input$process_image == 0) {
         return(DT::datatable(NULL, style = "bootstrap4"))
       }
 
       input$process_image
       isolate({
-        data <- input$nanorod_lengths_csv
+        data <- react_vals$nanorods_table
       })
+
+      table <- data %>%
+        dplyr::select(Nanorod_ID, length_in_nm, coord_x, coord_y) %>%
+        render_datatable(selection = "multiple") %>%
+        DT::formatRound(
+          columns = c("length_in_nm", "coord_x", "coord_y"),
+          digits = 2
+        )
+
+      return(table)
+    })
+
+    observeEvent(
+      input$analyse_data,
+      {
+        data <- react_vals$nanorods_table
+        sel_rows <- input$nanorods_table_rows_selected
+
+        lengths <- data %>%
+          dplyr::select(Nanorod_ID, length_in_nm)
+
+        if (!is.null(sel_rows)) {
+          lengths <- lengths %>%
+            dplyr::slice(sel_rows)
+        }
+        react_vals$lengths <- lengths
+      }
+    )
 
       data_path <- data$datapath
 
