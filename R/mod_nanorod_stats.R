@@ -212,11 +212,47 @@ mod_nanorod_stats_server <- function(id) {
       }
     )
 
-      data_path <- data$datapath
+    # Images ----
+    output$nanorods_image_processed <- renderImage(
+      {
+        if (input$process_image == 0) {
+          return(list(src = ""))
+        }
 
-      data_input <- data_path %>%
-        utils::read.csv() %>%
-        dplyr::select("length_in_nm")
+        input$process_image
+        isolate({
+          filename <- react_vals$plot_processed_path
+        })
+
+        # Return a list containing the filename
+        list(
+          src = filename,
+          class = "nanorod-img"
+        )
+      },
+      deleteFile = FALSE
+    )
+
+    output$nanorods_image_raw <- renderImage(
+      {
+        if (input$process_image == 0) {
+          return(list(src = ""))
+        }
+
+        input$process_image
+        isolate({
+          filename <- react_vals$plot_raw_path
+        })
+
+        # Return a list containing the filename
+        list(
+          src = filename,
+          class = "nanorod-img"
+        )
+      },
+      deleteFile = FALSE
+    )
+
 
       table <- render_datatable(data_input)
 
