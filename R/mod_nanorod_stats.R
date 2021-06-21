@@ -14,7 +14,8 @@ mod_nanorod_stats_ui <- function(id) {
     value = "tab-nanorod-detection",
     sidebarLayout(
       sidebarPanel = sidebarPanel(
-        width = 5,
+        width = 4,
+        # Image input ----
         fileInput(
           inputId = ns("nanorod_image_dm4"),
           label = "File input"
@@ -24,13 +25,33 @@ mod_nanorod_stats_ui <- function(id) {
           label = "Process image",
           class = "btn-primary",
           icon = icon("ruler-combined")
-        )
+        ),
+
+        # Processed image ----
+        hr(),
+        DT::DTOutput(ns("nanorods_table")),
+        shinyjs::disabled(
+          actionButton(
+            inputId = ns("analyse_data"),
+            label = "Analyse",
+            class = "btn-primary",
+            icon = icon("ruler-combined")
+          )
+        ),
       ),
       mainPanel = mainPanel(
-        width = 7,
+        width = 8,
+        # Results ----
         h2("Results"),
         tabsetPanel(
           type = "tabs",
+          tabPanel(
+            "Image results",
+            fluidRow(
+              col_6(plotOutput(ns("nanorods_image_raw"), height = "auto")),
+              col_6(plotOutput(ns("nanorods_image_processed"), height = "auto"))
+            )
+          ),
           tabPanel("Nanorod lengths", DT::DTOutput(ns("table_input"))),
           tabPanel("Descriptive statistics", DT::DTOutput(ns("table_stat"))),
           tabPanel("Histogram", plotOutput(ns("plot_histogram"))),
