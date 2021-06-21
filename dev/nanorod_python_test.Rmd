@@ -24,6 +24,8 @@ reticulate::use_virtualenv(virtualenv_dir, required = TRUE)
 
 # Load Python code
 reticulate::source_python(here::here("src/electron_microscopy.py"))
+skimage <- reticulate::import("skimage")
+# plt <- reticulate::import("matplotlib.pyplot")
 ```
 
 ```{r}
@@ -42,7 +44,6 @@ labels <- reorder_labels(labels)
 ```
 
 ```{r}
-skimage <- reticulate::import("skimage")
 labels_properties <- skimage$measure$regionprops(labels)
 ```
 
@@ -76,8 +77,8 @@ table <- table %>%
 ```
 
 ```{r}
-table %>% 
-  data.table::fwrite(here::here("inst/extdata", "nanorod_data_test.csv"))
+# table %>% 
+#   data.table::fwrite(here::here("inst/extdata", "nanorod_data_test.csv"))
 ```
 
 
@@ -87,23 +88,69 @@ table %>%
 ## Matplotlib
 
 ```{r}
-# Plots and saves the images.
-plotfig(labels, labels_properties, dm4_list$img, dm4_list$filename)
-plotfig_new(labels, labels_properties, dm4_list$img, dm4_list$filename)
+# Plots and saves the images
+plot <- plotfig(labels, labels_properties, dm4_list$img, dm4_list$filename, out_dpi = 96)
 ```
 
 ```{r}
-knitr::include_graphics(paste0(dm4_list$filename, ".png"))
+temp_img_path <- tempdir()
+plotfig_separate(labels, labels_properties, dm4_list$img, paste0(temp_img_path, "/", dm4_list$filename))
 ```
 
 ```{r}
-here::here("dev", paste0(dm4_list$filename, "_processed.png")) %>% 
-  magick::image_read() %>% 
+raw_path <- paste0(temp_img_path, "/", dm4_list$filename, "_raw.png")
+proc_path <- paste0(temp_img_path, "/", dm4_list$filename, "_processed.png")
+```
+
+```{r}
+knitr::include_graphics(raw_path)
+```
+
+```{r}
+px_trans <- function() {
+  scales::trans_new(
+    "px_trans", 
+    function(x) x * px_to / px_from, 
+    function(x) x * px_to / px_from
+  )
+}
+
+raw_img <- magick::image_read(raw_path)
+proc_img <- magick::image_read(proc_path)
+px_to <- dim(dm4_list$img)[[1]]
+
+list(
+  raw_img %>%
+    magick::image_resize(paste0(px_to, "x", px_to)) %>%
+    magick::image_ggplot() +
+    ggplot2::theme_bw() +
+    ggplot2::labs(title = "Original image", x = NULL, y = NULL),
+  proc_img %>%
+    magick::image_resize(paste0(px_to, "x", px_to)) %>%
+    magick::image_ggplot() +
+    ggplot2::theme_bw() +
+    ggplot2::labs(title = "Selected objects", x = NULL, y = NULL)
+) %>%
+  patchwork::wrap_plots()
+```
+
+```{r}
+px_from <- magick::image_info(proc_img)$height
+px_to <- dim(dm4_list$img)[[1]]
+
+proc_img %>%
+  magick::image_resize(paste0(px_to, "x", px_to)) %>%
   magick::image_ggplot() +
-  theme_bw() +
-  labs(title = "Selected objects")
-  # scale_y_continuous(trans = "reverse")
+  ggplot2::theme_bw() +
+  ggplot2::labs(title = "Selected objects", x = NULL, y = NULL) +
+  ggplot2::scale_y_continuous(
+    # breaks = function(x) x * px_to / px_from,
+    # labels = function(x) x * px_to / px_from
+    # trans = "px",
+    # expand = c(0, 0)
+  )
 ```
+
 
 
 ## Native R
