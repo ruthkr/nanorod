@@ -7,31 +7,28 @@
 #' @noRd
 #'
 #' @importFrom shiny NS tagList
-mod_nanorod_stats_ui <- function(id){
+mod_nanorod_stats_ui <- function(id) {
   ns <- NS(id)
   tabPanel(
     title = "Nanorod Detection",
     value = "tab-nanorod-detection",
-
     sidebarLayout(
       sidebarPanel = sidebarPanel(
         width = 5,
-
         fileInput(
-          inputId = ns("nanorod_lengths_csv"),
+          inputId = ns("nanorod_image_dm4"),
           label = "File input"
         ),
         actionButton(
-          inputId = ns("calculate"),
-          label = "Calculate",
+          inputId = ns("process_image"),
+          label = "Process image",
           class = "btn-primary",
-          icon = icon("calculator")
+          icon = icon("ruler-combined")
         )
       ),
       mainPanel = mainPanel(
         width = 7,
         h2("Results"),
-
         tabsetPanel(
           type = "tabs",
           tabPanel("Nanorod lengths", DT::DTOutput(ns("table_input"))),
@@ -48,16 +45,78 @@ mod_nanorod_stats_ui <- function(id){
 #' nanorod_stats Server Functions
 #'
 #' @noRd
-mod_nanorod_stats_server <- function(id){
-  moduleServer( id, function(input, output, session){
+mod_nanorod_stats_server <- function(id) {
+  moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
+    options(shiny.maxRequestSize = 150 * 1024^2)
+
+    # Load virtualenv
+    virtualenv_dir = Sys.getenv('VIRTUALENV_NAME')
+    python_path = Sys.getenv('PYTHON_PATH')
+    reticulate::use_python(python_path, required = TRUE)
+    reticulate::use_virtualenv(virtualenv_dir, required = TRUE)
+
+    # Load Python code
+    reticulate::source_python("src/primality_test.py")
+
+    react_vals <- reactiveValues()
+
+    # Calculations ----
+    observeEvent(
+      input$process_image,
+      {
+        # Read inputs
+        image <- input$nanorod_image_dm4
+        image_name <- image$name
+        image_path <- image$datapath
+
+        # Process image
+        dm4_list <- open_DM4(image_path)
+        names(dm4_list) <- c("filename", "img", "pixel_size")
+
+        binary <- img_prep(dm4_list$img) # Prepares the image to be labelled.
+        labels <- watershedding(binary) # Watersheds and labels the image.
+        labels <- filter_labels_by_area(labels, 500, dm4_list$pixel_size)
+        labels <- filter_labels_by_minor_axis_length(labels, 40, dm4_list$pixel_size)
+        labels <- reorder_labels(labels)
+        skimage <- reticulate::import("skimage")
+        labels_properties <- skimage$measure$regionprops(labels)
+
+        # Process table
+        table <- skimage$measure$regionprops_table(
+          labels,
+          properties = c('label', 'centroid', 'feret_diameter_max')
+        ) %>% as.data.frame()
+
+        table <- table %>%
+          dplyr::mutate(
+            feret_diameter_max = dm4_list$pixel_size * feret_diameter_max,
+            image_name = image_name
+          ) %>%
+          dplyr::select(
+            Nanorod_ID = label,
+            image_name,
+            coord_x = centroid.0,
+            coord_y = centroid.1,
+            length_in_nm = feret_diameter_max
+          )
+
+        # Render plots
+        plotfig(labels, labels_properties, dm4_list$img, image_name)
+
+        # Reactive values
+        react_vals$nanorods_table <- table
+        react_vals$plot_path <- paste0(image_name, ".png")
+      }
+    )
+
     output$table_input <- DT::renderDT({
-      if (input$calculate == 0) {
+      if (input$process_image == 0) {
         return(DT::datatable(NULL, style = "bootstrap4"))
       }
 
-      input$calculate
+      input$process_image
       isolate({
         data <- input$nanorod_lengths_csv
       })
@@ -65,20 +124,20 @@ mod_nanorod_stats_server <- function(id){
       data_path <- data$datapath
 
       data_input <- data_path %>%
-        utils::read.csv(col.names = c("Length"))
+        utils::read.csv() %>%
+        dplyr::select("length_in_nm")
 
       table <- render_datatable(data_input)
 
       return(table)
-
     })
 
     output$table_stat <- DT::renderDT({
-      if (input$calculate == 0) {
+      if (input$process_image == 0) {
         return(DT::datatable(NULL, style = "bootstrap4"))
       }
 
-      input$calculate
+      input$process_image
       isolate({
         data <- input$nanorod_lengths_csv
       })
@@ -90,32 +149,34 @@ mod_nanorod_stats_server <- function(id){
       table <- render_datatable(stat_df)
 
       return(table)
-
     })
 
-    output$plot_histogram <- renderPlot({
-      if (input$calculate == 0) {
-        return(NULL)
-      }
+    output$plot_histogram <- renderPlot(
+      {
+        if (input$process_image == 0) {
+          return(NULL)
+        }
 
-      input$calculate
-      isolate({
-        data <- input$nanorod_lengths_csv
-      })
+        input$process_image
+        isolate({
+          data <- input$nanorod_lengths_csv
+        })
 
-      data_path <- data$datapath
+        data_path <- data$datapath
 
-      gg <- plot_hist(csv_path = data_path)
+        gg <- plot_hist(csv_path = data_path)
 
-      return(gg$hist_plot)
-    }, res = 96)
+        return(gg$hist_plot)
+      },
+      res = 96
+    )
 
     output$table_range <- DT::renderDT({
-      if (input$calculate == 0) {
+      if (input$process_image == 0) {
         return(DT::datatable(NULL, style = "bootstrap4"))
       }
 
-      input$calculate
+      input$process_image
       isolate({
         data <- input$nanorod_lengths_csv
       })
@@ -127,25 +188,27 @@ mod_nanorod_stats_server <- function(id){
       table <- render_datatable(gg$grouped_length_df)
 
       return(table)
-
     })
 
-    output$plot_boxplot <- renderPlot({
-      if (input$calculate == 0) {
-        return(NULL)
-      }
+    output$plot_boxplot <- renderPlot(
+      {
+        if (input$process_image == 0) {
+          return(NULL)
+        }
 
-      input$calculate
-      isolate({
-        data <- input$nanorod_lengths_csv
-      })
+        input$process_image
+        isolate({
+          data <- input$nanorod_lengths_csv
+        })
 
-      data_path <- data$datapath
+        data_path <- data$datapath
 
-      gg <- plot_boxplot(csv_path = data_path)
+        gg <- plot_boxplot(csv_path = data_path)
 
-      return(gg)
-    }, res = 96)
+        return(gg)
+      },
+      res = 96
+    )
   })
 }
 
