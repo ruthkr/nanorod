@@ -30,12 +30,14 @@ mod_nanorod_stats_ui <- function(id) {
         # Processed image ----
         hr(),
         DT::DTOutput(ns("nanorods_table")),
+
+        widget_sep_vert(),
         shinyjs::disabled(
           actionButton(
             inputId = ns("analyse_data"),
             label = "Analyse",
             class = "btn-primary",
-            icon = icon("ruler-combined")
+            icon = icon("cogs")
           )
         ),
       ),
@@ -52,7 +54,7 @@ mod_nanorod_stats_ui <- function(id) {
               col_6(plotOutput(ns("nanorods_image_processed"), height = "auto"))
             )
           ),
-          tabPanel("Nanorod lengths", DT::DTOutput(ns("table_input"))),
+          tabPanel("Nanorod lengths", DT::DTOutput(ns("table_lengths"))),
           tabPanel("Descriptive statistics", DT::DTOutput(ns("table_stat"))),
           tabPanel("Histogram", plotOutput(ns("plot_histogram"))),
           tabPanel("Grouped Nanorod", DT::DTOutput(ns("table_range"))),
@@ -269,7 +271,7 @@ mod_nanorod_stats_server <- function(id) {
     )
 
     # Other outputs ----
-    output$table_input <- DT::renderDT({
+    output$table_lengths <- DT::renderDT({
       if (input$process_image == 0) {
         return(DT::datatable(NULL, style = "bootstrap4"))
       }
@@ -279,7 +281,11 @@ mod_nanorod_stats_server <- function(id) {
         data <- react_vals$lengths
       })
 
-      table <- render_datatable(data)
+      table <- render_datatable_justified(data) %>%
+        DT::formatRound(
+          columns = c("length_in_nm"),
+          digits = 2
+        )
 
       return(table)
     })
@@ -296,7 +302,7 @@ mod_nanorod_stats_server <- function(id) {
 
       stat_df <- get_summary_stat(data)
 
-      table <- render_datatable(stat_df)
+      table <- render_datatable_justified_nopage(stat_df)
 
       return(table)
     })
@@ -327,7 +333,7 @@ mod_nanorod_stats_server <- function(id) {
       })
 
       gg <- plot_hist(data)
-      table <- render_datatable(gg$grouped_length_df)
+      table <- render_datatable_justified(gg$grouped_length_df)
 
       return(table)
     })
