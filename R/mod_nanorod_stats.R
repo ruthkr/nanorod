@@ -86,6 +86,13 @@ mod_nanorod_stats_server <- function(id) {
 
     react_vals <- reactiveValues()
 
+    # Make sure process_image actionButton() is disabled on startup
+    shinyjs::disable("process_image")
+    observe({
+      req(input$nanorod_image_dm4$datapath)
+      shinyjs::enable("process_image")
+    })
+
     # Python image processing ----
     observeEvent(
       input$process_image,
