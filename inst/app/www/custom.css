@@ -123,3 +123,22 @@
 .table.dataTable tbody td.active, .table.dataTable tbody tr.active td {
   background-color: #F5C38D !important;
 }
+
+div.dataTables_paginate {
+  float: left;
+  margin-top: 5px !important;
+  margin-right: 10px !important;
+}
+
+div.dt-buttons {
+  display: flex;
+  margin-top: 7px !important;
+}
+
+div.dt-buttons .btn-secondary,
+.download-audience,
+.download-audience.disabled {
+  color: #4f555c;
+  background-color: #ffffff;
+  border-color: #dee2e6;
+}
