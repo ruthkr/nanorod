@@ -5,6 +5,8 @@
 #' @import shiny
 #' @noRd
 app_ui <- function(request) {
+  # Set global ggplot theme
+  ggplot2::theme_set(ggplot2::theme_light())
   tagList(
     # Leave this function for adding external resources
     golem_add_external_resources(),
@@ -16,7 +18,9 @@ app_ui <- function(request) {
 
       app_body_home(),
       mod_nanorod_stats_ui("nanorod_stats_ui_1"),
+      # mod_python_ui("python_ui_1"),
       selected = "tab-nanorod-detection"
+      # selected = "tab-python"
     )
   )
 }
