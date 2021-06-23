@@ -18,9 +18,7 @@ app_ui <- function(request) {
 
       app_body_home(),
       mod_nanorod_stats_ui("nanorod_stats_ui_1"),
-      # mod_python_ui("python_ui_1"),
       selected = "tab-nanorod-detection"
-      # selected = "tab-python"
     )
   )
 }
