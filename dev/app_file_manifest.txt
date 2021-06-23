@@ -1,0 +1,9 @@
+.Rprofile
+R
+inst
+man
+app.R
+LICENSE.md
+NEWS.md
+DESCRIPTION
+NAMESPACE
