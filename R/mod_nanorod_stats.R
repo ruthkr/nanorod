@@ -84,13 +84,18 @@ mod_nanorod_stats_server <- function(id) {
     })
 
     # Load virtualenv
+    message("[Nanorods] Loading Python environment...")
     virtualenv_dir <- Sys.getenv("VIRTUALENV_NAME")
     python_path <- Sys.getenv("PYTHON_PATH")
     reticulate::use_python(python_path, required = TRUE)
     reticulate::use_virtualenv(virtualenv_dir, required = TRUE)
+    message("[Nanorods] Python environment loaded successfully:")
+    message(str(reticulate::py_config()))
 
     # Load Python code
-    reticulate::source_python("src/electron_microscopy.py")
+    message("[Nanorods] Loading Python script...")
+    reticulate::source_python(app_sys("python/electron_microscopy.py"))
+    message("[Nanorods] Python script loaded successfully!")
     skimage <- reticulate::import("skimage")
 
     react_vals <- reactiveValues()
