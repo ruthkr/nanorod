@@ -17,8 +17,7 @@ def open_DM4(filepath):
     """This function opens the DM4 image and returns the name of the image, the image itself, and the pixel size."""
     fileDM4 = dm.dmReader(filepath)  # Imports the dm4 image as a dictionary.
     filename = fileDM4['filename']  # Gets the name of the image.
-    filename = filename.split('.')[
-        0]  # Removes the '.dm4' extension from the name of the image.
+    filename = filename.split('.')[0]  # Removes the '.dm4' extension from the name of the image.
     img = fileDM4['data']  # Gets the image itself as a float32 Numpy array.
     pixel_size = fileDM4['pixelSize'][0]  # Gets the pixel size in nm.
     return filename, img, pixel_size
