@@ -206,6 +206,10 @@ mod_nanorod_stats_server <- function(id) {
         data <- react_vals$nanorods_table
       })
 
+      # For debugging
+      # data <- iris %>%
+      #   `colnames<-`(c(c("Nanorod_ID", "length_in_nm", "coord_x", "coord_y"))
+
       table <- data %>%
         dplyr::select(Nanorod_ID, length_in_nm, coord_x, coord_y) %>%
         render_datatable(selection = "multiple") %>%

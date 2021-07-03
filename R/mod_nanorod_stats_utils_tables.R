@@ -6,11 +6,13 @@ render_datatable <- function(data, out_filename = "data", selection = "none", ..
     selection = selection,
     extensions = "Buttons",
     options = list(
-      pageLength = 10,
+      pageLength = 25,
+      pagingType = "full",
       filter = FALSE,
-      lengthChange = FALSE,
+      lengthChange = TRUE,
       scrollX = TRUE,
       dom = "
+      <'row'<'col-sm-12'l>>
       <'row'<'col-sm-12'tr>>
       <'row'<'col-sm-12 col-md-7'pB>>
       ",
