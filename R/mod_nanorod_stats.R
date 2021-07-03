@@ -76,6 +76,13 @@ mod_nanorod_stats_server <- function(id) {
 
     options(shiny.maxRequestSize = 150 * 1024^2)
 
+    # Make sure process_image actionButton() is disabled on startup
+    shinyjs::disable("process_image")
+    observe({
+      req(input$nanorod_image_dm4$datapath)
+      shinyjs::enable("process_image")
+    })
+
     # Load virtualenv
     virtualenv_dir <- Sys.getenv("VIRTUALENV_NAME")
     python_path <- Sys.getenv("PYTHON_PATH")
@@ -87,13 +94,6 @@ mod_nanorod_stats_server <- function(id) {
     skimage <- reticulate::import("skimage")
 
     react_vals <- reactiveValues()
-
-    # Make sure process_image actionButton() is disabled on startup
-    shinyjs::disable("process_image")
-    observe({
-      req(input$nanorod_image_dm4$datapath)
-      shinyjs::enable("process_image")
-    })
 
     # Python image processing ----
     observeEvent(
