@@ -15,14 +15,18 @@ get_summary_stat <- function(data) {
 }
 
 #' @importFrom rlang .data
-plot_hist <- function(data, col_choice = "#69b3a2", transparency_choice = 0.8) {
+plot_hist <- function(data, show_density = FALSE, bin_width = NA, col_choice = "#69b3a2", transparency_choice = 0.8) {
   # Read data
   data <- data %>%
     `colnames<-`(c("nanorod_id", "length"))
 
   # Define the bin width
-  # https://stats.stackexchange.com/questions/798/calculating-optimal-number-of-bins-in-a-histogram
-  bw <- 2 * stats::IQR(data$length) / length(data$length)^(1 / 3)
+  if (is.na(bin_width)) {
+    # https://stats.stackexchange.com/questions/798/calculating-optimal-number-of-bins-in-a-histogram
+    bw <- 2 * stats::IQR(data$length) / length(data$length)^(1 / 3)
+  } else {
+    bw <- bin_width
+  }
 
   # Define pars for bin
   round_any <- function(x, accuracy, f = round) {
@@ -68,10 +72,25 @@ plot_hist <- function(data, col_choice = "#69b3a2", transparency_choice = 0.8) {
     ) %>%
     # Plot
     ggplot2::ggplot() +
-    ggplot2::aes(x = .data$bin_centre, y = .data$count) +
-    ggplot2::geom_col(fill = col_choice, color = "#e9ecef", alpha = transparency_choice) +
+    ggplot2::geom_col(
+      mapping = ggplot2::aes(x = .data$bin_centre, y = .data$count),
+      fill = col_choice, color = "#e9ecef", alpha = transparency_choice
+    ) +
     ggplot2::scale_x_continuous(breaks = x_breaks) +
     ggplot2::labs(x = "Length (nm)", y = "Counts")
+
+  if (show_density) {
+    gghist <- gghist +
+      # ggplot2::geom_density(
+      #   data = data,
+      #   mapping = ggplot2::aes(x = .data$length)
+      # )
+      ggplot2::geom_line(
+        data = data %>% dplyr::select(length),
+        mapping = ggplot2::aes(y = ..density..),
+        stat = 'density'
+      )
+  }
 
   list_output <- list(
     grouped_length_df = grouped_df,

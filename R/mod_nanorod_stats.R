@@ -32,6 +32,12 @@ mod_nanorod_stats_ui <- function(id) {
         DT::DTOutput(ns("nanorods_table")),
 
         widget_sep_vert(),
+
+        numericInput(
+          inputId = ns("bin_width"),
+          label = "Histogram interval width",
+          value = NULL
+        ),
         shinyjs::disabled(
           actionButton(
             inputId = ns("analyse_data"),
@@ -324,9 +330,10 @@ mod_nanorod_stats_server <- function(id) {
       input$analyse_data
       isolate({
         data <- react_vals$lengths
+        bin_width <- input$bin_width
       })
 
-      gg <- plot_hist(data)
+      gg <- plot_hist(data, show_density = FALSE, bin_width = bin_width)
 
       return(gg$hist_plot)
     }, res = 96)
