@@ -23,6 +23,7 @@ Imports:
     rlang,
     shiny (>= 1.6.0),
     shinydisconnect,
+    shinyFiles,
     shinyjs,
     stringr,
     tidyr
