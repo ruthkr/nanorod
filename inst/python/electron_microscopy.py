@@ -150,6 +150,17 @@ def filter_labels_by_minor_axis_length(labels, length_in_nm, pixel_size):
     return labels_cleaned
 
 
+def create_length_prop(properties, pixel_size):
+    """This function creates two additional region properties in the list of region properties that is produced by skimage.measure.regionprops.
+    The input is a regionprops list and the output is a regionprops list with a property called "length" and a property called "area_to_length".
+    length = np.sqrt((feret_diameter_max*pixel_size)**2 - (18**2) # From Pythagoras's theorem.
+    area_to_length = (area*pixel_size*pixel_size) / length # Should be arounf 18."""
+    for i in properties:
+        i.length = np.sqrt((i.feret_diameter_max * pixel_size)**2 - 18**2)
+        i.area_to_length = (i.area * pixel_size * pixel_size) / i.length
+    return properties
+
+
 def filter_labels_by_area(labels, area_in_nm2, pixel_size):
     """This function filters out labels that have an area below the value of the "area" parameter. The output is a labelled image."""
     props = measure.regionprops(labels)
