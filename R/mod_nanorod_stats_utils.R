@@ -18,7 +18,7 @@ get_summary_stat <- function(data) {
 plot_hist <- function(data, show_density = FALSE, bin_width = NA, col_choice = "#69b3a2", transparency_choice = 0.8) {
   # Read data
   data <- data %>%
-    `colnames<-`(c("nanorod_id", "length"))
+    dplyr::select(length = length_in_nm)
 
   # Define the bin width
   if (is.na(bin_width)) {
@@ -104,7 +104,7 @@ plot_hist <- function(data, show_density = FALSE, bin_width = NA, col_choice = "
 plot_boxplot <- function(data, col_choice = "#69b3a2", transparency_choice = 0.7) {
   # Read data
   data <- data %>%
-    `colnames<-`(c("nanorod_id", "length"))
+    dplyr::select(length = length_in_nm)
 
   ggboxplot <- data %>%
     ggplot2::ggplot() +
