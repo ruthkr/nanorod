@@ -7,6 +7,7 @@ output: no
 # Initial set-up
 
 ```{r setup, message=FALSE, include=FALSE}
+devtools::load_all()
 library(tidyverse)
 theme_set(theme_light())
 ```
@@ -23,13 +24,13 @@ reticulate::use_python(python_path, required = TRUE)
 reticulate::use_virtualenv(virtualenv_dir, required = TRUE)
 
 # Load Python code
-reticulate::source_python(here::here("src/electron_microscopy.py"))
+reticulate::source_python(app_sys("python/electron_microscopy.py"))
 skimage <- reticulate::import("skimage")
 # plt <- reticulate::import("matplotlib.pyplot")
 ```
 
 ```{r}
-image_path <- "/Users/kristiar/Downloads/Nanorods/1-3 dilution/1-2_dilution__45kX__JR__0004.dm4"
+image_path <- app_sys("extdata/1-2_dilution__45kX__JR__0004.dm4")
 
 dm4_list <- open_DM4(image_path)
 names(dm4_list) <- c("filename", "img", "pixel_size")
@@ -45,6 +46,20 @@ labels <- reorder_labels(labels)
 
 ```{r}
 labels_properties <- skimage$measure$regionprops(labels)
+labels_properties <- labels_properties %>% 
+  create_length_prop(pixel_size = dm4_list$pixel_size)
+```
+
+```{r}
+labels_properties %>% 
+  purrr::map(
+    ~ .x$length
+  ) %>% 
+  purrr::reduce(c)
+```
+
+```{r}
+labels_properties %>% sapply(FUN = function(x) x$length)# %>% unlist()
 ```
 
 
@@ -52,12 +67,12 @@ labels_properties <- skimage$measure$regionprops(labels)
 
 ```{r}
 # Creates a table containing the nanorod properties.
-table <- skimage$measure$regionprops_table(labels, properties = c('label', 'centroid', 'feret_diameter_max'))
+table <- skimage$measure$regionprops_table(labels, properties = c('label', 'centroid', 'area'))
 table <- as.data.frame(table)
 
 table <- table %>%
   dplyr::mutate(
-    feret_diameter_max = dm4_list$pixel_size * feret_diameter_max,
+    # feret_diameter_max = dm4_list$pixel_size * feret_diameter_max,
     image_name = paste0(dm4_list$filename, ".dm4")
   ) %>%
   # dplyr::select(
@@ -67,12 +82,24 @@ table <- table %>%
   #   "Coordinate in X" = centroid.1,
   #   "Length in nm" = feret_diameter_max
   # )
-   dplyr::select(
+  #  dplyr::select(
+  #   Nanorod_ID = label,
+  #   image_name,
+  #   coord_x = centroid.0,
+  #   coord_y = centroid.1,
+  #   length_in_nm = feret_diameter_max
+  # )
+  dplyr::mutate(
+    area = dm4_list$pixel_size * dm4_list$pixel_size * area,
+    length_in_nm = labels_properties %>% purrr::map(~ .x$length) %>% purrr::reduce(c)
+  ) %>%
+  dplyr::select(
     Nanorod_ID = label,
     image_name,
     coord_x = centroid.0,
     coord_y = centroid.1,
-    length_in_nm = feret_diameter_max
+    length_in_nm,
+    area
   )
 ```
 

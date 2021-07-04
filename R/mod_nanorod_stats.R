@@ -194,26 +194,29 @@ mod_nanorod_stats_server <- function(id) {
 
             # Labels properties
             labels_properties <- labels %>%
-              skimage$measure$regionprops()
+              skimage$measure$regionprops() %>%
+              create_length_prop(pixel_size = dm4_list$pixel_size)
 
             # Process table
             message("[Nanorods] Summarising data...")
             incProgress(3 / 5, detail = "Summarising data")
             table_list[[image_name]] <- skimage$measure$regionprops_table(
               labels,
-              properties = c("label", "centroid", "feret_diameter_max")
+              properties = c("label", "centroid", "area")
             ) %>%
               as.data.frame() %>%
               dplyr::mutate(
-                feret_diameter_max = dm4_list$pixel_size * feret_diameter_max,
-                image_name = image_name
+                area = dm4_list$pixel_size * dm4_list$pixel_size * area,
+                image_name = image_name,
+                length_in_nm = sapply(X = labels_properties, FUN = function(x) x$length)
               ) %>%
               dplyr::select(
                 Nanorod_ID = label,
                 image_name,
                 coord_x = centroid.0,
                 coord_y = centroid.1,
-                length_in_nm = feret_diameter_max
+                length_in_nm,
+                area
               )
 
             # Render plots
