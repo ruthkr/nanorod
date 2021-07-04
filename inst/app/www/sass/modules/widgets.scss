@@ -58,3 +58,12 @@ div.dt-buttons .btn-secondary,
   background-color: #ffffff;
   border-color: #dee2e6;
 }
+
+/* shinyFiles fixes */
+.sF-dirWindow {
+  display: flex;
+}
+
+.sF-breadcrumps {
+  width: calc(100% - 380px) !important;
+}
