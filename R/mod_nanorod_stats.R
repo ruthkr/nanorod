@@ -142,7 +142,7 @@ mod_nanorod_stats_server <- function(id) {
     shinyFiles::shinyDirChoose(
       input,
       id = "nanorods_dir",
-      roots = c(nanorod = app_sys("extdata"), home = "~"),
+      roots = c(home = "~"), #nanorod = app_sys("extdata"),
       filetypes = c("", "dm4", "tiff", "tff"),
       allowDirCreate = FALSE
     )
@@ -283,10 +283,19 @@ mod_nanorod_stats_server <- function(id) {
       #   `colnames<-`(c("Nanorod_ID", "length_in_nm", "coord_x", "coord_y"))
 
       table <- data %>%
-        dplyr::select(Nanorod_ID, length_in_nm, coord_x, coord_y) %>%
-        render_datatable(selection = "multiple") %>%
+        dplyr::select(
+          image_name,
+          Nanorod_ID,
+          length_in_nm,
+          area
+          # coord_x, coord_y
+        ) %>%
+        render_datatable(
+          selection = "multiple",
+          colnames = c("Image name", "ID", "Length (nm)", "Area (nm\u00b2)")
+        ) %>%
         DT::formatRound(
-          columns = c("length_in_nm", "coord_x", "coord_y"),
+          columns = c("length_in_nm", "area"),
           digits = 2
         )
 
@@ -300,7 +309,7 @@ mod_nanorod_stats_server <- function(id) {
         sel_rows <- input$nanorods_table_rows_selected
 
         lengths <- data %>%
-          dplyr::select(Nanorod_ID, length_in_nm)
+          dplyr::select(image_name, Nanorod_ID, length_in_nm, area)
 
         if (!is.null(sel_rows)) {
           lengths <- lengths %>%
@@ -364,9 +373,12 @@ mod_nanorod_stats_server <- function(id) {
         data <- react_vals$lengths
       })
 
-      table <- render_datatable_justified(data) %>%
+      table <- data %>%
+        render_datatable_justified(
+          colnames = c("Image name", "ID", "Length (nm)", "Area (nm\u00b2)")
+        ) %>%
         DT::formatRound(
-          columns = c("length_in_nm"),
+          columns = c("length_in_nm", "area"),
           digits = 2
         )
 
