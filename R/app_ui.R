@@ -10,6 +10,19 @@ app_ui <- function(request) {
   tagList(
     # Leave this function for adding external resources
     golem_add_external_resources(),
+    shinydisconnect::disconnectMessage(
+      text = "An error occurred. Please refresh the page and try again.",
+      refresh = "Refresh",
+      background = "#FFFFFF",
+      colour = "#444444",
+      refreshColour = "#E3825C",
+      overlayColour = "#000000",
+      overlayOpacity = 0.6,
+      width = 450,
+      top = 100,
+      size = 22,
+      css = ""
+    ),
     # Your application UI logic
     navbarPage(
       title = app_title("nanorod"),
