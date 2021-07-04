@@ -16,10 +16,23 @@ mod_nanorod_stats_ui <- function(id) {
       sidebarPanel = sidebarPanel(
         width = 4,
         # Image input ----
-        fileInput(
-          inputId = ns("nanorod_image_dm4"),
-          label = "File input"
+        # fileInput(
+        #   inputId = ns("nanorod_image_dm4"),
+        #   label = "File input"
+        # ),
+        shinyFiles::shinyDirButton(
+          id = ns("nanorods_dir"),
+          label = "Input directory",
+          title = "Select folder"
         ),
+        # shinyjs::disabled(
+        #   textInput(
+        #     inputId = ns("print_dir_path"),
+        #     label = NULL,
+        #     value = NULL,
+        #   )
+        # ),
+        widget_sep_vert(),
         actionButton(
           inputId = ns("process_image"),
           label = "Process image",
@@ -27,12 +40,13 @@ mod_nanorod_stats_ui <- function(id) {
           icon = icon("ruler-combined")
         ),
 
-        # Processed image ----
+        # Processed table ----
         hr(),
         DT::DTOutput(ns("nanorods_table")),
-
         widget_sep_vert(),
 
+        # Analyse data ----
+        hr(),
         numericInput(
           inputId = ns("bin_width"),
           label = "Histogram interval width",
@@ -56,6 +70,15 @@ mod_nanorod_stats_ui <- function(id) {
           tabPanel(
             "Image results",
             fluidRow(
+              col_12(
+                style = "padding-top: 20px;",
+                selectizeInput(
+                  inputId = ns("image_thumbnail"),
+                  label = "Select image to preview",
+                  choices = NULL,
+                  selected = 1
+                )
+              ),
               col_6(plotOutput(ns("nanorods_image_raw"), height = "auto")),
               col_6(plotOutput(ns("nanorods_image_processed"), height = "auto"))
             )
@@ -85,11 +108,20 @@ mod_nanorod_stats_server <- function(id) {
     # Make sure process_image actionButton() is disabled on startup
     shinyjs::disable("process_image")
     observe({
-      req(input$nanorod_image_dm4$datapath)
+      # req(input$nanorod_image_dm4$datapath)
+      req(input$nanorods_dir)
       shinyjs::enable("process_image")
+      # updateTextInput(
+      #   session = session,
+      #   inputId = "print_dir_path",
+      #   value = paste0(
+      #     tools::file_path_as_absolute("~"),
+      #     stringr::str_c(unlist(input$nanorods_dir$path), collapse = "/")
+      #   )
+      # )
     })
 
-    # Load virtualenv
+    # Load virtualenv ----
     message("[Nanorods] Loading Python environment...")
     virtualenv_dir <- Sys.getenv("VIRTUALENV_NAME")
     python_path <- Sys.getenv("PYTHON_PATH")
@@ -106,79 +138,101 @@ mod_nanorod_stats_server <- function(id) {
 
     react_vals <- reactiveValues()
 
+    # Nanorods directory ----
+    shinyFiles::shinyDirChoose(
+      input,
+      id = "nanorods_dir",
+      roots = c(nanorod = app_sys("extdata"), home = "~"),
+      filetypes = c("", "dm4", "tiff", "tff"),
+      allowDirCreate = FALSE
+    )
+
     # Python image processing ----
     observeEvent(
       input$process_image,
       {
-        # Read inputs
-        image <- input$nanorod_image_dm4
-        image_name <- image$name
-        image_path <- image$datapath
+        # Read folder contents
+        home_path <- tools::file_path_as_absolute("~")
+        raw_dir <- input$nanorods_dir
+        dir <- paste0(home_path, stringr::str_c(unlist(raw_dir$path), collapse = "/"))
+        image_names <- list.files(dir, pattern = "*.dm4$") %>%
+          stringr::str_remove_all(".dm4")
+        temp_img_path <- tempdir()
 
-        withProgress(message = "Processing DM4 image", {
-          incProgress(0, detail = NULL)
+        # Process images
+        table_list <- list()
 
-          message("[Nanorods] Reading data...")
-          incProgress(1 / 5, detail = "Reading image")
-          # Read image
-          dm4_list <- open_DM4(filepath = image_path) %>%
-            `names<-`(c("filename", "img", "pixel_size"))
-          binary <- img_prep(img = dm4_list$img)
+        for (image_name in image_names) {
+          image_path <- paste0(dir, "/", image_name, ".dm4")
+          image_iter <- paste0("(", which(image_names == image_name), "/", length(image_names), ")")
+          message("[Nanorods] Processing image ", image_name, " ", image_iter, "...")
 
-          # Watershed and label the image
-          message("[Nanorods] Processing image...")
-          incProgress(2 / 5, detail = "Processing image")
-          labels <- binary %>%
-            watershedding() %>%
-            filter_labels_by_area(
-              area_in_nm2 = 500,
-              pixel_size = dm4_list$pixel_size
+          withProgress(message = paste("Processing DM4 image ", image_iter), {
+            incProgress(0, detail = NULL)
+
+            message("[Nanorods] Reading data...")
+            incProgress(1 / 5, detail = "Reading image")
+            # Read image
+            dm4_list <- open_DM4(filepath = image_path) %>%
+              `names<-`(c("filename", "img", "pixel_size"))
+            binary <- img_prep(img = dm4_list$img)
+
+            # Watershed and label the image
+            message("[Nanorods] Processing image...")
+            incProgress(2 / 5, detail = "Processing image")
+            labels <- binary %>%
+              watershedding() %>%
+              filter_labels_by_area(
+                area_in_nm2 = 500,
+                pixel_size = dm4_list$pixel_size
+              ) %>%
+              filter_labels_by_minor_axis_length(
+                length_in_nm = 40,
+                pixel_size = dm4_list$pixel_size
+              ) %>%
+              reorder_labels()
+
+            # Labels properties
+            labels_properties <- labels %>%
+              skimage$measure$regionprops()
+
+            # Process table
+            message("[Nanorods] Summarising data...")
+            incProgress(3 / 5, detail = "Summarising data")
+            table_list[[image_name]] <- skimage$measure$regionprops_table(
+              labels,
+              properties = c("label", "centroid", "feret_diameter_max")
             ) %>%
-            filter_labels_by_minor_axis_length(
-              length_in_nm = 40,
-              pixel_size = dm4_list$pixel_size
-            ) %>%
-            reorder_labels()
+              as.data.frame() %>%
+              dplyr::mutate(
+                feret_diameter_max = dm4_list$pixel_size * feret_diameter_max,
+                image_name = image_name
+              ) %>%
+              dplyr::select(
+                Nanorod_ID = label,
+                image_name,
+                coord_x = centroid.0,
+                coord_y = centroid.1,
+                length_in_nm = feret_diameter_max
+              )
 
-          # Labels properties
-          labels_properties <- labels %>%
-            skimage$measure$regionprops()
-
-          # Process table
-          message("[Nanorods] Summarising data...")
-          incProgress(3 / 5, detail = "Summarising data")
-          table <- skimage$measure$regionprops_table(
-            labels,
-            properties = c("label", "centroid", "feret_diameter_max")
-          ) %>%
-            as.data.frame() %>%
-            dplyr::mutate(
-              feret_diameter_max = dm4_list$pixel_size * feret_diameter_max,
-              image_name = image_name
-            ) %>%
-            dplyr::select(
-              Nanorod_ID = label,
-              image_name,
-              coord_x = centroid.0,
-              coord_y = centroid.1,
-              length_in_nm = feret_diameter_max
+            # Render plots
+            message("[Nanorods] Rendering images...")
+            incProgress(4 / 5, detail = "Rendering images")
+            plotfig_separate(
+              labels = labels,
+              region_properties = labels_properties,
+              img = dm4_list$img,
+              filename = paste0(temp_img_path, "/", image_name),
+              out_dpi = 300
             )
 
-          # Render plots
-          message("[Nanorods] Rendering images...")
-          incProgress(4 / 5, detail = "Rendering images")
-          temp_img_path <- tempdir()
-          plotfig_separate(
-            labels = labels,
-            region_properties = labels_properties,
-            img = dm4_list$img,
-            filename = paste0(temp_img_path, "/", image_name),
-            out_dpi = 300
-          )
+            message("[Nanorods] Image processed successfully")
+            incProgress(1, detail = "Done")
+          })
+        }
 
-          message("[Nanorods] Image processed successfully")
-          incProgress(1, detail = "Done")
-        })
+        table <- dplyr::bind_rows(table_list)
 
         showNotification(
           ui = "Image processed successfully"
@@ -187,8 +241,17 @@ mod_nanorod_stats_server <- function(id) {
         # Reactive values
         message("[Nanorods] Saving results into react_vals...")
         react_vals$nanorods_table <- table
-        react_vals$plot_raw_path <- paste0(temp_img_path, "/", image_name, "_raw.png")
-        react_vals$plot_processed_path <- paste0(temp_img_path, "/", image_name, "_processed.png")
+        react_vals$images_temp_dir <- temp_img_path
+        react_vals$image_names <- image_names
+
+        # Update image selector
+        updateSelectizeInput(
+          session = session,
+          inputId = "image_thumbnail",
+          choices = image_names,
+          server = TRUE
+        )
+        message("[Nanorods] Updated nanorod image selector")
       }
     )
 
@@ -251,9 +314,10 @@ mod_nanorod_stats_server <- function(id) {
           return(list(src = ""))
         }
 
-        input$process_image
+        input$image_thumbnail
         isolate({
-          filename <- react_vals$plot_processed_path
+          image_name <- input$image_thumbnail
+          filename <- paste0(react_vals$images_temp_dir, "/", image_name, "_processed.png")
         })
 
         # Return a list containing the filename
@@ -271,9 +335,10 @@ mod_nanorod_stats_server <- function(id) {
           return(list(src = ""))
         }
 
-        input$process_image
+        input$image_thumbnail
         isolate({
-          filename <- react_vals$plot_raw_path
+          image_name <- input$image_thumbnail
+          filename <- paste0(react_vals$images_temp_dir, "/", image_name, "_raw.png")
         })
 
         # Return a list containing the filename
@@ -322,21 +387,24 @@ mod_nanorod_stats_server <- function(id) {
       return(table)
     })
 
-    output$plot_histogram <- renderPlot({
-      if (input$analyse_data == 0) {
-        return(NULL)
-      }
+    output$plot_histogram <- renderPlot(
+      {
+        if (input$analyse_data == 0) {
+          return(NULL)
+        }
 
-      input$analyse_data
-      isolate({
-        data <- react_vals$lengths
-        bin_width <- input$bin_width
-      })
+        input$analyse_data
+        isolate({
+          data <- react_vals$lengths
+          bin_width <- input$bin_width
+        })
 
-      gg <- plot_hist(data, show_density = FALSE, bin_width = bin_width)
+        gg <- plot_hist(data, show_density = FALSE, bin_width = bin_width)
 
-      return(gg$hist_plot)
-    }, res = 96)
+        return(gg$hist_plot)
+      },
+      res = 96
+    )
 
     output$table_range <- DT::renderDT({
       if (input$analyse_data == 0) {
