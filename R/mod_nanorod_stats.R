@@ -238,7 +238,7 @@ mod_nanorod_stats_server <- function(id) {
 
         if (!is.null(sel_rows)) {
           lengths <- lengths %>%
-            dplyr::slice(sel_rows)
+            dplyr::slice(-sel_rows)
         }
         react_vals$lengths <- lengths
       }
