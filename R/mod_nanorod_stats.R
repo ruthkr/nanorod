@@ -429,9 +429,10 @@ mod_nanorod_stats_server <- function(id) {
       input$analyse_data
       isolate({
         data <- react_vals$lengths
+        bin_width <- input$bin_width
       })
 
-      gg <- plot_hist(data)
+      gg <- plot_hist(data, show_density = FALSE, bin_width = bin_width)
       table <- render_datatable_justified(gg$grouped_length_df)
 
       return(table)
