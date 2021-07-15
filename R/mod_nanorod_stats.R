@@ -35,7 +35,7 @@ mod_nanorod_stats_ui <- function(id) {
         widget_sep_vert(),
         actionButton(
           inputId = ns("process_image"),
-          label = "Process image",
+          label = "Process images",
           class = "btn-primary",
           icon = icon("ruler-combined")
         ),
