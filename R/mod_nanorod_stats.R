@@ -124,7 +124,7 @@ mod_nanorod_stats_server <- function(id) {
     # Load virtualenv ----
     message("[Nanorods] Loading Python environment...")
     virtualenv_dir <- Sys.getenv("VIRTUALENV_NAME")
-    python_path <- Sys.getenv("PYTHON_PATH")
+    python_path <- pyenv_python(version = Sys.getenv("PYTHON_VERSION"))
     reticulate::use_python(python_path, required = TRUE)
     reticulate::use_virtualenv(virtualenv_dir, required = TRUE)
     message("[Nanorods] Python environment loaded successfully:")
