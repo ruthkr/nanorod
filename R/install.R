@@ -5,7 +5,7 @@
 #' @export
 set_up_python <- function(python_path = NULL) {
   # Variables
-  virtualenv_dir <- Sys.getenv("VIRTUALENV_DIR")
+  virtualenv_dir <- Sys.getenv("VIRTUALENV_NAME")
   python_version <- Sys.getenv("PYTHON_VERSION")
 
   # Install Python
