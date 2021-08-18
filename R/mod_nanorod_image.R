@@ -247,7 +247,7 @@ mod_nanorod_image_server <- function(id) {
         message("[Nanorods] Saving results into react_vals...")
         react_vals$nanorods_table <- table
         react_vals$images_temp_dir <- temp_img_path
-        react_vals$image_names <- image_names
+        # react_vals$image_names <- image_names
 
         # Update image selector
         updateSelectizeInput(
