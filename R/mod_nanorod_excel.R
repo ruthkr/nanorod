@@ -68,8 +68,7 @@ mod_nanorod_excel_ui <- function(id) {
                   selected = 1
                 )
               ),
-              col_6(plotOutput(ns("nanorods_image_raw"), height = "auto")),
-              col_6(plotOutput(ns("nanorods_image_processed"), height = "auto"))
+              col_12(plotOutput(ns("nanorods_image_output"), height = "auto"))
             )
           ),
           tabPanel("Nanorod lengths", DT::DTOutput(ns("table_lengths"))),
@@ -118,7 +117,7 @@ mod_nanorod_excel_server <- function(id) {
       input,
       id = "nanorods_dir",
       roots = c(home = "~"), #nanorod = app_sys("extdata"),
-      filetypes = c("", "dm4", "tiff", "tff"),
+      filetypes = c("", "xlsx", "xls", "png"),
       allowDirCreate = FALSE
     )
 
@@ -130,97 +129,33 @@ mod_nanorod_excel_server <- function(id) {
         home_path <- tools::file_path_as_absolute("~")
         raw_dir <- input$nanorods_dir
         dir <- paste0(home_path, stringr::str_c(unlist(raw_dir$path), collapse = "/"))
-        image_names <- list.files(dir, pattern = "*.dm4$") %>%
-          stringr::str_remove_all(".dm4")
-        temp_img_path <- tempdir()
+        excel_path <- list.files(dir, pattern = "*.xls*.$")
+        image_names <- list.files(dir, pattern = "*.png$") %>%
+          stringr::str_remove_all(".png")
+        temp_img_path <- dir
 
-        # Process images
-        table_list <- list()
-
-        for (image_name in image_names) {
-          image_path <- paste0(dir, "/", image_name, ".dm4")
-          image_iter <- paste0("(", which(image_names == image_name), "/", length(image_names), ")")
-          message("[Nanorods] Processing image ", image_name, " ", image_iter, "...")
-
-          withProgress(message = paste("Processing DM4 image ", image_iter), {
-            incProgress(0, detail = NULL)
-
-            message("[Nanorods] Reading data...")
-            incProgress(1 / 5, detail = "Reading image")
-            # Read image
-            dm4_list <- open_DM4(filepath = image_path) %>%
-              `names<-`(c("filename", "img", "pixel_size"))
-            binary <- img_prep(img = dm4_list$img)
-
-            # Watershed and label the image
-            message("[Nanorods] Processing image...")
-            incProgress(2 / 5, detail = "Processing image")
-            labels <- binary %>%
-              watershedding() %>%
-              filter_labels_by_area(
-                area_in_nm2 = 500,
-                pixel_size = dm4_list$pixel_size
-              ) %>%
-              filter_labels_by_minor_axis_length(
-                length_in_nm = 40,
-                pixel_size = dm4_list$pixel_size
-              ) %>%
-              reorder_labels()
-
-            # Labels properties
-            labels_properties <- labels %>%
-              skimage$measure$regionprops() %>%
-              create_length_prop(pixel_size = dm4_list$pixel_size)
-
-            # Process table
-            message("[Nanorods] Summarising data...")
-            incProgress(3 / 5, detail = "Summarising data")
-            table_list[[image_name]] <- skimage$measure$regionprops_table(
-              labels,
-              properties = c("label", "centroid", "area")
-            ) %>%
-              as.data.frame() %>%
-              dplyr::mutate(
-                area = dm4_list$pixel_size * dm4_list$pixel_size * area,
-                image_name = image_name,
-                length_in_nm = sapply(X = labels_properties, FUN = function(x) x$length)
-              ) %>%
-              dplyr::select(
-                Nanorod_ID = .data$label,
-                .data$image_name,
-                coord_x = .data$centroid.0,
-                coord_y = .data$centroid.1,
-                .data$length_in_nm,
-                .data$area
-              )
-
-            # Render plots
-            message("[Nanorods] Rendering images...")
-            incProgress(4 / 5, detail = "Rendering images")
-            plotfig_separate(
-              labels = labels,
-              region_properties = labels_properties,
-              img = dm4_list$img,
-              filename = paste0(temp_img_path, "/", image_name),
-              out_dpi = 300
-            )
-
-            message("[Nanorods] Image processed successfully")
-            incProgress(1, detail = "Done")
-          })
-        }
-
-        table <- dplyr::bind_rows(table_list)
+        table <- readxl::read_xlsx(paste0(dir, "/", excel_path)) %>%
+          dplyr::select(
+            image_name = `Image name`,
+            Nanorod_ID = `Nanorod ID`,
+            length_in_nm = `Length in nm`,
+            area = `Area in nm square`,
+            coord_x = `Coordinate in X`,
+            coord_y = `Coordinate in Y`
+          ) %>%
+          dplyr::mutate(
+            image_name = stringr::str_replace_all(image_name, ".mrc$", ".png")
+          )
 
         showNotification(
-          ui = "Image processed successfully"
+          ui = "Files read successfully"
         )
 
         # Reactive values
         message("[Nanorods] Saving results into react_vals...")
         react_vals$nanorods_table <- table
         react_vals$images_temp_dir <- temp_img_path
-        react_vals$image_names <- image_names
+        # react_vals$image_names <- image_names
 
         # Update image selector
         updateSelectizeInput(
@@ -295,7 +230,7 @@ mod_nanorod_excel_server <- function(id) {
     )
 
     # Images ----
-    output$nanorods_image_processed <- renderImage(
+    output$nanorods_image_output <- renderImage(
       {
         if (input$read_files == 0) {
           return(list(src = ""))
@@ -304,28 +239,7 @@ mod_nanorod_excel_server <- function(id) {
         input$image_thumbnail
         isolate({
           image_name <- input$image_thumbnail
-          filename <- paste0(react_vals$images_temp_dir, "/", image_name, "_processed.png")
-        })
-
-        # Return a list containing the filename
-        list(
-          src = filename,
-          class = "nanorod-img"
-        )
-      },
-      deleteFile = FALSE
-    )
-
-    output$nanorods_image_raw <- renderImage(
-      {
-        if (input$read_files == 0) {
-          return(list(src = ""))
-        }
-
-        input$image_thumbnail
-        isolate({
-          image_name <- input$image_thumbnail
-          filename <- paste0(react_vals$images_temp_dir, "/", image_name, "_raw.png")
+          filename <- paste0(react_vals$images_temp_dir, "/", image_name, ".png")
         })
 
         # Return a list containing the filename
