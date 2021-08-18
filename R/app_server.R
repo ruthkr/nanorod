@@ -6,5 +6,5 @@
 #' @noRd
 app_server <- function( input, output, session ) {
   # Your application server logic
-  mod_nanorod_stats_server("nanorod_stats_ui_1")
+  # mod_nanorod_image_server("nanorod_image_ui_1")
 }

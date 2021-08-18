@@ -30,8 +30,8 @@ app_ui <- function(request) {
       collapsible = TRUE,
 
       app_body_home(),
-      mod_nanorod_stats_ui("nanorod_stats_ui_1"),
       selected = "tab-nanorod-detection"
+      # mod_nanorod_image_ui("nanorod_image_ui_1"),
     )
   )
 }

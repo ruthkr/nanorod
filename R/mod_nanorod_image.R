@@ -1,4 +1,4 @@
-#' nanorod_stats UI Function
+#' nanorod_image UI Function
 #'
 #' @description A shiny Module.
 #'
@@ -7,11 +7,12 @@
 #' @noRd
 #'
 #' @importFrom shiny NS tagList
-mod_nanorod_stats_ui <- function(id) {
+mod_nanorod_image_ui <- function(id) {
   ns <- NS(id)
   tabPanel(
-    title = "Nanorod Detection",
+    title = "Image Input",
     value = "tab-nanorod-detection",
+    icon = shiny::icon("image"),
     sidebarLayout(
       sidebarPanel = sidebarPanel(
         width = 4,
@@ -94,10 +95,11 @@ mod_nanorod_stats_ui <- function(id) {
   )
 }
 
-#' nanorod_stats Server Functions
+#' nanorod_image Server Functions
 #'
 #' @noRd
-mod_nanorod_stats_server <- function(id) {
+#' @importFrom rlang .data
+mod_nanorod_image_server <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -128,7 +130,7 @@ mod_nanorod_stats_server <- function(id) {
     reticulate::use_python(python_path, required = TRUE)
     reticulate::use_virtualenv(virtualenv_dir, required = TRUE)
     message("[Nanorods] Python environment loaded successfully:")
-    message(str(reticulate::py_config()))
+    message(utils::str(reticulate::py_config()))
 
     # Load Python code
     message("[Nanorods] Loading Python script...")
@@ -211,12 +213,12 @@ mod_nanorod_stats_server <- function(id) {
                 length_in_nm = sapply(X = labels_properties, FUN = function(x) x$length)
               ) %>%
               dplyr::select(
-                Nanorod_ID = label,
-                image_name,
-                coord_x = centroid.0,
-                coord_y = centroid.1,
-                length_in_nm,
-                area
+                Nanorod_ID = .data$label,
+                .data$image_name,
+                coord_x = .data$centroid.0,
+                coord_y = .data$centroid.1,
+                .data$length_in_nm,
+                .data$area
               )
 
             # Render plots
@@ -459,7 +461,7 @@ mod_nanorod_stats_server <- function(id) {
 }
 
 ## To be copied in the UI
-# mod_nanorod_stats_ui("nanorod_stats_ui_1")
+# mod_nanorod_image_ui("nanorod_image_ui_1")
 
 ## To be copied in the server
-# mod_nanorod_stats_server("nanorod_stats_ui_1")
+# mod_nanorod_image_server("nanorod_image_ui_1")
