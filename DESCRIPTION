@@ -20,6 +20,7 @@ Imports:
     magrittr,
     pkgload,
     rappdirs,
+    readxl,
     reticulate,
     rlang,
     shiny (>= 1.6.0),
@@ -32,3 +33,7 @@ Imports:
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
+Suggests: 
+    rmarkdown,
+    knitr
+VignetteBuilder: knitr
