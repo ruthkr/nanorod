@@ -15,7 +15,7 @@ get_summary_stat <- function(data) {
 }
 
 #' @importFrom rlang .data
-plot_hist <- function(data, show_density = FALSE, bin_width = NA, col_choice = "#69b3a2", transparency_choice = 0.8) {
+plot_hist <- function(data, show_density = FALSE, bin_width = NA, col_choice = "#69b3a2", bin_accuracy = 5, transparency_choice = 0.8) {
   # Read data
   data <- data %>%
     dplyr::select(length = .data$length_in_nm)
@@ -35,11 +35,11 @@ plot_hist <- function(data, show_density = FALSE, bin_width = NA, col_choice = "
 
   length_range <- range(data$length)
 
-  bw_round <- round_any(bw, 10, ceiling)
+  bw_round <- round_any(bw, bin_accuracy, ceiling)
 
   x_breaks <- seq(
-    length_range[[1]] %>% round_any(10, floor) - bw_round,
-    length_range[[2]] %>% round_any(10, ceiling) + bw_round,
+    length_range[[1]] %>% round_any(bin_accuracy, floor) - bw_round,
+    length_range[[2]] %>% round_any(bin_accuracy, ceiling) + bw_round,
     bw_round
   )
 
@@ -88,7 +88,7 @@ plot_hist <- function(data, show_density = FALSE, bin_width = NA, col_choice = "
       ggplot2::geom_line(
         data = data %>% dplyr::select(length),
         mapping = ggplot2::aes(y = ..density..),
-        stat = 'density'
+        stat = "density"
       )
   }
 
