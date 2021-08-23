@@ -123,7 +123,7 @@ mod_nanorod_excel_server <- function(id) {
     # shinyFiles::shinyDirChoose(
     #   input,
     #   id = "nanorods_dir",
-    #   roots = c(home = "~"), #nanorod = app_sys("extdata"),
+    #   roots = c(home = "~"), # nanorod = app_sys("extdata"),
     #   filetypes = c("", "xlsx", "xls", "png"),
     #   allowDirCreate = FALSE
     # )
@@ -133,7 +133,7 @@ mod_nanorod_excel_server <- function(id) {
       input$read_files,
       {
         # Either use {shiny} or {shinyFile} to upload files
-        upload_method = "shiny"
+        upload_method <- "shiny"
 
         if (upload_method == "shiny") {
           # Read folder contents

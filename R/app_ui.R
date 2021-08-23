@@ -28,7 +28,6 @@ app_ui <- function(request) {
       title = app_title("nanorod"),
       theme = theme(),
       collapsible = TRUE,
-
       app_body_home(),
       # mod_nanorod_image_ui("nanorod_image_ui_1"),
       mod_nanorod_excel_ui("nanorod_excel_ui_1"),
@@ -61,4 +60,3 @@ golem_add_external_resources <- function() {
     # for example, you can add shinyalert::useShinyalert()
   )
 }
-

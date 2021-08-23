@@ -144,7 +144,7 @@ mod_nanorod_image_server <- function(id) {
     shinyFiles::shinyDirChoose(
       input,
       id = "nanorods_dir",
-      roots = c(home = "~"), #nanorod = app_sys("extdata"),
+      roots = c(home = "~"), # nanorod = app_sys("extdata"),
       filetypes = c("", "dm4", "tiff", "tff"),
       allowDirCreate = FALSE
     )

@@ -14,7 +14,6 @@ app_body_home <- function() {
       includeMarkdown(
         app_sys("app/www", "app_body.md")
       ),
-
       actionButton(
         inputId = "btn_github",
         label = "Source code",

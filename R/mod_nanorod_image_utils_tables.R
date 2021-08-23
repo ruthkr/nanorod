@@ -61,7 +61,7 @@ render_datatable_justified <- function(data, out_filename = "data", selection = 
       scrollX = TRUE,
       columnDefs = list(
         # list(width = "100px", targets = c(0)),
-        list(className = 'dt-center', targets = c(0, 1))
+        list(className = "dt-center", targets = c(0, 1))
       ),
       dom = "
       <'row'<'col-sm-12'tr>>
@@ -109,7 +109,7 @@ render_datatable_justified_nopage <- function(data, out_filename = "data", selec
       scrollX = TRUE,
       columnDefs = list(
         # list(width = "100px", targets = c(0)),
-        list(className = 'dt-center', targets = c(0, 1))
+        list(className = "dt-center", targets = c(0, 1))
       ),
       dom = "
       <'row'<'col-sm-12'tr>>
