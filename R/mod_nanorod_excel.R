@@ -16,15 +16,21 @@ mod_nanorod_excel_ui <- function(id) {
     sidebarLayout(
       sidebarPanel = sidebarPanel(
         width = 4,
-        shinyFiles::shinyDirButton(
-          id = ns("nanorods_dir"),
-          label = "Input directory",
-          title = "Select folder"
+        # shinyFiles::shinyDirButton(
+        #   id = ns("nanorods_dir"),
+        #   label = "Input directory",
+        #   title = "Select folder"
+        # ),
+        shiny::fileInput(
+          inputId = ns("nanorods_xlsx_file"),
+          label = "Choose Excel File",
+          multiple = TRUE,
+          accept = c(".csv", ".xlsx", ".xls", ".png", ".mrc")
         ),
         widget_sep_vert(),
         actionButton(
           inputId = ns("read_files"),
-          label = "Upload files",
+          label = "Read files",
           class = "btn-primary",
           icon = icon("file-upload")
         ),
@@ -65,7 +71,8 @@ mod_nanorod_excel_ui <- function(id) {
                   inputId = ns("image_thumbnail"),
                   label = "Select image to preview",
                   choices = NULL,
-                  selected = 1
+                  selected = 1,
+                  width = "600"
                 )
               ),
               col_12(plotOutput(ns("nanorods_image_output"), height = "auto"))
@@ -97,8 +104,8 @@ mod_nanorod_excel_server <- function(id) {
     # Make sure read_files actionButton() is disabled on startup
     shinyjs::disable("read_files")
     observe({
-      # req(input$nanorod_excel_dm4$datapath)
-      req(input$nanorods_dir)
+      # req(input$nanorods_dir)
+      req(input$nanorods_xlsx_file$datapath)
       shinyjs::enable("read_files")
       # updateTextInput(
       #   session = session,
@@ -113,28 +120,49 @@ mod_nanorod_excel_server <- function(id) {
     react_vals <- reactiveValues()
 
     # Nanorods directory ----
-    shinyFiles::shinyDirChoose(
-      input,
-      id = "nanorods_dir",
-      roots = c(home = "~"), #nanorod = app_sys("extdata"),
-      filetypes = c("", "xlsx", "xls", "png"),
-      allowDirCreate = FALSE
-    )
+    # shinyFiles::shinyDirChoose(
+    #   input,
+    #   id = "nanorods_dir",
+    #   roots = c(home = "~"), #nanorod = app_sys("extdata"),
+    #   filetypes = c("", "xlsx", "xls", "png"),
+    #   allowDirCreate = FALSE
+    # )
 
     # Python image processing ----
     observeEvent(
       input$read_files,
       {
-        # Read folder contents
-        home_path <- tools::file_path_as_absolute("~")
-        raw_dir <- input$nanorods_dir
-        dir <- paste0(home_path, stringr::str_c(unlist(raw_dir$path), collapse = "/"))
-        excel_path <- list.files(dir, pattern = "*.xls*.$")
-        image_names <- list.files(dir, pattern = "*.png$") %>%
-          stringr::str_remove_all(".png")
-        temp_img_path <- dir
+        # Either use {shiny} or {shinyFile} to upload files
+        upload_method = "shiny"
 
-        table <- readxl::read_xlsx(paste0(dir, "/", excel_path)) %>%
+        if (upload_method == "shiny") {
+          # Read folder contents
+          files <- input$nanorods_xlsx_file
+          excel_path <- files %>%
+            dplyr::filter(stringr::str_detect(name, "\\.xls*.$")) %>%
+            dplyr::pull(datapath)
+          image_names <- files %>%
+            dplyr::filter(stringr::str_detect(name, "\\.png$"))
+          temp_img_path <- NULL
+
+          # Read XLSX file
+          table <- readxl::read_xlsx(excel_path)
+        } else if (upload_method == "shinyFiles") {
+          # Read folder contents
+          home_path <- tools::file_path_as_absolute("~")
+          raw_dir <- input$nanorods_dir
+          dir <- paste0(home_path, stringr::str_c(unlist(raw_dir$path), collapse = "/"))
+          excel_path <- list.files(dir, pattern = "*.xls*.$")
+          image_names <- list.files(dir, pattern = "*.png$") %>%
+            stringr::str_remove_all(".png")
+          temp_img_path <- dir
+
+          # Read XLSX file
+          table <- readxl::read_xlsx(paste0(dir, "/", excel_path))
+        }
+
+        # Process XLSX file
+        table <- table %>%
           dplyr::select(
             image_name = `Image name`,
             Nanorod_ID = `Nanorod ID`,
@@ -155,13 +183,13 @@ mod_nanorod_excel_server <- function(id) {
         message("[Nanorods] Saving results into react_vals...")
         react_vals$nanorods_table <- table
         react_vals$images_temp_dir <- temp_img_path
-        # react_vals$image_names <- image_names
 
         # Update image selector
         updateSelectizeInput(
           session = session,
           inputId = "image_thumbnail",
-          choices = image_names,
+          choices = image_names$name,
+          # choices = image_names,
           server = TRUE
         )
         message("[Nanorods] Updated nanorod image selector")
@@ -239,7 +267,10 @@ mod_nanorod_excel_server <- function(id) {
         input$image_thumbnail
         isolate({
           image_name <- input$image_thumbnail
-          filename <- paste0(react_vals$images_temp_dir, "/", image_name, ".png")
+          filename <- input$nanorods_xlsx_file %>%
+            dplyr::filter(name == image_name) %>%
+            dplyr::pull(datapath)
+          # filename <- paste0(react_vals$images_temp_dir, "/", image_name, ".png")
         })
 
         # Return a list containing the filename
