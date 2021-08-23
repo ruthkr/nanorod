@@ -206,7 +206,7 @@ mod_nanorod_excel_server <- function(id) {
     })
 
     # Nanorods table ----
-    output$nanorods_table <- DT::renderDT({
+    output$nanorods_table <- DT::renderDT(server = FALSE, {
       if (input$read_files == 0) {
         return(DT::datatable(NULL, style = "bootstrap4"))
       }
@@ -284,7 +284,7 @@ mod_nanorod_excel_server <- function(id) {
     )
 
     # Other outputs ----
-    output$table_lengths <- DT::renderDT({
+    output$table_lengths <- DT::renderDT(server = FALSE, {
       if (input$read_files == 0) {
         return(DT::datatable(NULL, style = "bootstrap4"))
       }
