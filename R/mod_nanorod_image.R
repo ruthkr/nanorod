@@ -208,7 +208,7 @@ mod_nanorod_image_server <- function(id) {
             ) %>%
               as.data.frame() %>%
               dplyr::mutate(
-                area = dm4_list$pixel_size * dm4_list$pixel_size * area,
+                area = dm4_list$pixel_size * dm4_list$pixel_size * .data$area,
                 image_name = image_name,
                 length_in_nm = sapply(X = labels_properties, FUN = function(x) x$length)
               ) %>%
@@ -286,11 +286,12 @@ mod_nanorod_image_server <- function(id) {
 
       table <- data %>%
         dplyr::select(
-          image_name,
-          Nanorod_ID,
-          length_in_nm,
-          area
-          # coord_x, coord_y
+          .data$image_name,
+          .data$Nanorod_ID,
+          .data$length_in_nm,
+          .data$area
+          # .data$coord_x,
+          # .data$coord_y
         ) %>%
         render_datatable(
           selection = "multiple",
@@ -311,7 +312,7 @@ mod_nanorod_image_server <- function(id) {
         sel_rows <- input$nanorods_table_rows_selected
 
         lengths <- data %>%
-          dplyr::select(image_name, Nanorod_ID, length_in_nm, area)
+          dplyr::select(.data$image_name, .data$Nanorod_ID, .data$length_in_nm, .data$area)
 
         if (!is.null(sel_rows)) {
           lengths <- lengths %>%

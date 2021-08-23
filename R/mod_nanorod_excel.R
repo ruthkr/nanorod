@@ -139,10 +139,10 @@ mod_nanorod_excel_server <- function(id) {
           # Read folder contents
           files <- input$nanorods_xlsx_file
           excel_path <- files %>%
-            dplyr::filter(stringr::str_detect(name, "\\.xls*.$")) %>%
-            dplyr::pull(datapath)
+            dplyr::filter(stringr::str_detect(.data$name, "\\.xls*.$")) %>%
+            dplyr::pull(.data$datapath)
           image_names <- files %>%
-            dplyr::filter(stringr::str_detect(name, "\\.png$"))
+            dplyr::filter(stringr::str_detect(.data$name, "\\.png$"))
           temp_img_path <- NULL
 
           # Read XLSX file
@@ -164,15 +164,15 @@ mod_nanorod_excel_server <- function(id) {
         # Process XLSX file
         table <- table %>%
           dplyr::select(
-            image_name = `Image name`,
-            Nanorod_ID = `Nanorod ID`,
-            length_in_nm = `Length in nm`,
-            area = `Area in nm square`,
-            coord_x = `Coordinate in X`,
-            coord_y = `Coordinate in Y`
+            image_name = .data$`Image name`,
+            Nanorod_ID = .data$`Nanorod ID`,
+            length_in_nm = .data$`Length in nm`,
+            area = .data$`Area in nm square`,
+            coord_x = .data$`Coordinate in X`,
+            coord_y = .data$`Coordinate in Y`
           ) %>%
           dplyr::mutate(
-            image_name = stringr::str_replace_all(image_name, ".mrc$", ".png")
+            image_name = stringr::str_replace_all(.data$image_name, ".mrc$", ".png")
           )
 
         showNotification(
@@ -222,11 +222,12 @@ mod_nanorod_excel_server <- function(id) {
 
       table <- data %>%
         dplyr::select(
-          image_name,
-          Nanorod_ID,
-          length_in_nm,
-          area
-          # coord_x, coord_y
+          .data$image_name,
+          .data$Nanorod_ID,
+          .data$length_in_nm,
+          .data$area
+          # .data$coord_x,
+          # .data$coord_y
         ) %>%
         render_datatable(
           selection = "multiple",
@@ -247,7 +248,7 @@ mod_nanorod_excel_server <- function(id) {
         sel_rows <- input$nanorods_table_rows_selected
 
         lengths <- data %>%
-          dplyr::select(image_name, Nanorod_ID, length_in_nm, area)
+          dplyr::select(.data$image_name, .data$Nanorod_ID, .data$length_in_nm, .data$area)
 
         if (!is.null(sel_rows)) {
           lengths <- lengths %>%
@@ -268,8 +269,8 @@ mod_nanorod_excel_server <- function(id) {
         isolate({
           image_name <- input$image_thumbnail
           filename <- input$nanorods_xlsx_file %>%
-            dplyr::filter(name == image_name) %>%
-            dplyr::pull(datapath)
+            dplyr::filter(.data$name == image_name) %>%
+            dplyr::pull(.data$datapath)
           # filename <- paste0(react_vals$images_temp_dir, "/", image_name, ".png")
         })
 
