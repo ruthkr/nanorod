@@ -1,7 +1,7 @@
 #' @importFrom rlang .data
 get_summary_stat <- function(data) {
   data <- data %>%
-    `colnames<-`(c("nanorod_id", "length"))
+    dplyr::select(nanorod_id = .data$Nanorod_ID, length = .data$length_in_nm)
 
   length <- data$length
 
