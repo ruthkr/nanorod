@@ -11,6 +11,7 @@ Description: What the package does (one paragraph).
 License: MIT + file LICENSE
 Imports: 
     bslib,
+    colourpicker,
     config (>= 0.3.1),
     data.table,
     dplyr,
