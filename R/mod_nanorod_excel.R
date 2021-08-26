@@ -28,6 +28,15 @@ mod_nanorod_excel_ui <- function(id) {
           accept = c(".csv", ".xlsx", ".xls", ".png", ".mrc")
         ),
         widget_sep_vert(),
+        sliderInput(
+          inputId = ns("length_range"),
+          label = "Range of nanorod length",
+          min = 0,
+          max = 300,
+          step = 10,
+          value = c(0, 300),
+          post = " nm"
+        ),
         actionButton(
           inputId = ns("read_files"),
           label = "Read files",
@@ -160,6 +169,7 @@ mod_nanorod_excel_server <- function(id) {
       {
         # Either use {shiny} or {shinyFile} to upload files
         upload_method <- "shiny"
+        length_range <- input$length_range
 
         if (upload_method == "shiny") {
           # Read folder contents
@@ -199,6 +209,10 @@ mod_nanorod_excel_server <- function(id) {
           ) %>%
           dplyr::mutate(
             image_name = stringr::str_replace_all(.data$image_name, ".mrc$", ".png")
+          ) %>%
+          dplyr::filter(
+            length_in_nm >= length_range[[1]],
+            length_in_nm <= length_range[[2]]
           )
 
         showNotification(
@@ -358,9 +372,10 @@ mod_nanorod_excel_server <- function(id) {
         input$analyse_data
         isolate({
           data <- react_vals$lengths
-          bin_width <- input$bin_width
-          colour <- input$histogram_colour
         })
+
+        bin_width <- input$bin_width
+        colour <- input$histogram_colour
 
         gg <- plot_hist(
           data,
