@@ -211,8 +211,8 @@ mod_nanorod_excel_server <- function(id) {
             image_name = stringr::str_replace_all(.data$image_name, ".mrc$", ".png")
           ) %>%
           dplyr::filter(
-            length_in_nm >= length_range[[1]],
-            length_in_nm <= length_range[[2]]
+            .data$length_in_nm >= length_range[[1]],
+            .data$length_in_nm <= length_range[[2]]
           )
 
         showNotification(
@@ -295,6 +295,10 @@ mod_nanorod_excel_server <- function(id) {
             dplyr::slice(-sel_rows)
         }
         react_vals$lengths <- lengths
+
+        showNotification(
+          ui = "Data analysed successfully"
+        )
       }
     )
 
