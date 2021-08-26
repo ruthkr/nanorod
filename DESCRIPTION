@@ -22,7 +22,6 @@ Imports:
     pkgload,
     rappdirs,
     readxl,
-    reticulate,
     rlang,
     shiny (>= 1.6.0),
     shinydisconnect,
