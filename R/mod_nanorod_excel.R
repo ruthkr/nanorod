@@ -305,7 +305,7 @@ mod_nanorod_excel_server <- function(id) {
     # Images ----
     output$nanorods_image_output <- renderImage(
       {
-        if (input$read_files == 0) {
+        if (input$image_thumbnail == "") {
           return(list(src = ""))
         }
 
