@@ -42,11 +42,6 @@ mod_nanorod_excel_ui <- function(id) {
 
         # Analyse data ----
         hr(),
-        numericInput(
-          inputId = ns("bin_width"),
-          label = "Histogram interval width",
-          value = NULL
-        ),
         shinyjs::disabled(
           actionButton(
             inputId = ns("analyse_data"),
@@ -78,11 +73,42 @@ mod_nanorod_excel_ui <- function(id) {
               col_12(plotOutput(ns("nanorods_image_output"), height = "auto"))
             )
           ),
-          tabPanel("Nanorod lengths", DT::DTOutput(ns("table_lengths"))),
-          tabPanel("Descriptive statistics", DT::DTOutput(ns("table_stat"))),
-          tabPanel("Histogram", plotOutput(ns("plot_histogram"))),
-          tabPanel("Grouped Nanorod", DT::DTOutput(ns("table_range"))),
-          tabPanel("Boxplot", plotOutput(ns("plot_boxplot")))
+          tabPanel(
+            "Nanorod lengths",
+            DT::DTOutput(ns("table_lengths"))
+          ),
+          tabPanel(
+            "Descriptive statistics",
+            DT::DTOutput(ns("table_stat"))
+          ),
+          tabPanel(
+            "Histogram",
+            plotOutput(ns("plot_histogram")),
+            numericInput(
+              inputId = ns("bin_width"),
+              label = "Histogram interval width",
+              value = NULL
+            ),
+            colourpicker::colourInput(
+              inputId = ns("histogram_colour"),
+              label = "Histogram colour",
+              showColour = "background",
+              palette = "limited",
+              value = "#74add1",
+              allowedCols = c(
+                "#1b7837", "#5aae61", "#b2df8a", "#a6dba0", "#4575b4", "#74add1", "#abd9e9", "#8da0cb",
+                "#8073ac", "#d73027", "#f46d43", "#fb9a99", "#fdae61", "#fee090", "#b3b3b3", "#000000"
+              )
+            )
+          ),
+          tabPanel(
+            "Grouped Nanorod",
+            DT::DTOutput(ns("table_range"))
+          ),
+          tabPanel(
+            "Boxplot",
+            plotOutput(ns("plot_boxplot"))
+          )
         )
       )
     )
@@ -333,9 +359,15 @@ mod_nanorod_excel_server <- function(id) {
         isolate({
           data <- react_vals$lengths
           bin_width <- input$bin_width
+          colour <- input$histogram_colour
         })
 
-        gg <- plot_hist(data, show_density = FALSE, bin_width = bin_width)
+        gg <- plot_hist(
+          data,
+          show_density = FALSE,
+          bin_width = bin_width,
+          col_choice = colour
+        )
 
         return(gg$hist_plot)
       },
