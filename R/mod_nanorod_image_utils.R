@@ -15,7 +15,7 @@ get_summary_stat <- function(data) {
 }
 
 #' @importFrom rlang .data
-plot_hist <- function(data, show_density = FALSE, bin_width = NA, col_choice = "#69b3a2", bin_accuracy = 5, transparency_choice = 0.8) {
+plot_hist <- function(data, show_density = FALSE, bin_width = NA, col_choice = "#74add1", bin_accuracy = 5, opacity_choice = 1) {
   # Read data
   data <- data %>%
     dplyr::select(length = .data$length_in_nm)
@@ -74,7 +74,7 @@ plot_hist <- function(data, show_density = FALSE, bin_width = NA, col_choice = "
     ggplot2::ggplot() +
     ggplot2::geom_col(
       mapping = ggplot2::aes(x = .data$bin_centre, y = .data$count),
-      fill = col_choice, color = "#e9ecef", alpha = transparency_choice
+      fill = col_choice, color = "#e9ecef", alpha = opacity_choice
     ) +
     ggplot2::scale_x_continuous(breaks = x_breaks) +
     ggplot2::labs(x = "Length (nm)", y = "Counts")
@@ -101,7 +101,7 @@ plot_hist <- function(data, show_density = FALSE, bin_width = NA, col_choice = "
 }
 
 #' @importFrom rlang .data
-plot_boxplot <- function(data, col_choice = "#69b3a2", transparency_choice = 0.7) {
+plot_boxplot <- function(data, col_choice = "#74add1", opacity_choice = 1) {
   # Read data
   data <- data %>%
     dplyr::select(length = .data$length_in_nm)
@@ -109,7 +109,7 @@ plot_boxplot <- function(data, col_choice = "#69b3a2", transparency_choice = 0.7
   ggboxplot <- data %>%
     ggplot2::ggplot() +
     ggplot2::aes(y = .data$length) +
-    ggplot2::geom_boxplot(fill = col_choice, alpha = transparency_choice) +
+    ggplot2::geom_boxplot(fill = col_choice, alpha = opacity_choice) +
     ggplot2::theme(
       axis.text.x = ggplot2::element_blank(),
       axis.ticks.x = ggplot2::element_blank()
