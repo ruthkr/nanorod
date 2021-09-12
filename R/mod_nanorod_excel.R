@@ -182,7 +182,9 @@ mod_nanorod_excel_server <- function(id) {
           temp_img_path <- NULL
 
           # Read XLSX file
-          table <- readxl::read_xlsx(excel_path)
+          table <- excel_path %>%
+            purrr::map(readxl::read_xlsx) %>%
+            purrr::reduce(dplyr::bind_rows)
         } else if (upload_method == "shinyFiles") {
           # Read folder contents
           home_path <- tools::file_path_as_absolute("~")
