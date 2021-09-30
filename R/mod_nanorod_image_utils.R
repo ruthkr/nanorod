@@ -5,7 +5,7 @@ get_summary_stat <- function(data) {
 
   length <- data$length
 
-  df <- data.table::data.table(
+  df <- data.frame(
     "Statistic" = c("Mean", "Median", "SD", "Min", "Max", "Count"),
     "Value" = c(mean(length), stats::median(length), stats::sd(length), min(length), max(length), length(length))
   ) %>%
