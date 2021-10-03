@@ -29,7 +29,7 @@ app_ui <- function(request) {
       theme = theme(),
       collapsible = TRUE,
       app_body_home(),
-      # mod_nanorod_image_ui("nanorod_image_ui_1"),
+      mod_nanorod_image_ui("nanorod_image_ui_1"),
       mod_nanorod_excel_ui("nanorod_excel_ui_1"),
       selected = "tab-nanorod-read"
     )
