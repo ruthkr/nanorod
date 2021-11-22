@@ -200,6 +200,10 @@ mod_nanorod_excel_server <- function(id) {
         }
 
         # Process XLSX file
+        if (!("Area in nm square" %in% colnames(table))) {
+          table$`Area in nm square` <- NA
+        }
+
         table <- table %>%
           dplyr::select(
             image_name = .data$`Image name`,
