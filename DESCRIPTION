@@ -1,5 +1,5 @@
 Package: nanorod
-Title: An R Shiny Interface to Analyse Nanorod Greyscale Images
+Title: An R Shiny Interface for Nanorod Detection and Quantification
 Version: 0.0.0.9000
 Authors@R: 
     c(person(given = "Ruth",
