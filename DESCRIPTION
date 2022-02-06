@@ -1,5 +1,5 @@
 Package: nanorod
-Title: An Amazing Shiny App
+Title: An R Shiny Interface to Analyse Nanorod Greyscale Images
 Version: 0.0.0.9000
 Authors@R: 
     c(person(given = "Ruth",
@@ -12,6 +12,9 @@ Authors@R:
            role = c("aut"),
            email = "Sergio.Lopez@jic.ac.uk",
            comment = "Python original"))
+Description: An interface to automatically measure the length of nanorods from a
+    greyscale image formed in a transmission electron microscope (TEM) and 
+    analyse the results.
 License: MIT + file LICENSE
 Imports: 
     bslib,
