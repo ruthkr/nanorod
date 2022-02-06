@@ -19,26 +19,38 @@ knitr::opts_chunk$set(
 `r badgecreatr::badge_lifecycle("experimental")`
 <!-- badges: end -->
 
-The goal of nanorod is to ...
+
+`nanorod` is an interface to automatically measure the length of nanorods from a greyscale image formed in a transmission electron microscope (TEM) and analyse the results.
 
 ## Installation
 
-<!-- You can install the released version of nanorod from [CRAN](https://CRAN.R-project.org) with: -->
+First, we need to install the package itself by following the step below.
 
-<!-- ``` r -->
-<!-- install.packages("nanorod") -->
-<!-- ``` -->
+### Install nanorod
 
-The development version can be installed from [GitHub](https://github.com/) with:
-
-``` r
-# install.packages("devtools")
+```r
+install.packages("devtools")
 devtools::install_github("ruthkr/nanorod")
 ```
-## Example
 
-This is a basic example which shows you how to solve a common problem:
+*Notice that this is still under active development*.
 
-```{r example}
-# library(nanorod)
+The `nanorod` package uses some Python modules, and they need to be installed within a Python environment on your system. You can install Python and set up your environment by simply following the step below. 
+
+```r
+library(nanorod)
+set_up_python()
 ```
+
+**Note that this only needs to be run once**, i.e. the first time you use `nanorod`.
+
+## Running nanorod
+
+To run the `nanorod` interface locally, we can run the following command on the R console, which will invoke the Shiny user interface:
+
+```r
+library(nanorod)
+run_app()
+```
+
+Alternatively, `nanorod` can be accessed online on [https://ruthkr.shinyapps.io/nanorod/](https://ruthkr.shinyapps.io/nanorod/). 
