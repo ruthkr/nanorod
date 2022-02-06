@@ -2,12 +2,16 @@ Package: nanorod
 Title: An Amazing Shiny App
 Version: 0.0.0.9000
 Authors@R: 
-    person(given = "Ruth",
+    c(person(given = "Ruth",
            family = "Kristianingsih",
            role = c("aut", "cre"),
            email = "ruth.kristianingsih30@gmail.com",
-           comment = c(ORCID = "0000-0003-1873-6203"))
-Description: What the package does (one paragraph).
+           comment = c(ORCID = "0000-0003-1873-6203")),
+      person(given = "Sergio",
+           family = "Lopez",
+           role = c("aut"),
+           email = "Sergio.Lopez@jic.ac.uk",
+           comment = "Python original"))
 License: MIT + file LICENSE
 Imports: 
     bslib,
